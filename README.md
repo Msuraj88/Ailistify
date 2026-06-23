@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # AIListify
 
 A production-ready AI tools directory built with Next.js 15, TypeScript, Tailwind CSS, Shadcn UI, Prisma, PostgreSQL, and Auth.js.
@@ -89,3 +90,6 @@ See `.env.example` for all required variables.
 ## License
 
 MIT
+=======
+# Ailistify
+>>>>>>> c3e811c4e4a427c53d2ee21bee2bb36a2d80a304
