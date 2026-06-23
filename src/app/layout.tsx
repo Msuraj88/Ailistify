@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { MainLayout } from "@/components/layout/main-layout";
 import { AuthSessionProvider } from "@/components/shared/session-provider";
 import { ThemeProvider } from "@/components/shared/theme-provider";
 import { auth } from "@/lib/auth";
@@ -40,7 +39,7 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <MainLayout>{children}</MainLayout>
+            {children}
           </ThemeProvider>
         </AuthSessionProvider>
       </body>
