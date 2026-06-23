@@ -111,10 +111,9 @@ async function seedTools(prisma: PrismaClient, adminId: string) {
       .map((slug) => tagBySlug.get(slug))
       .filter((id): id is string => Boolean(id));
 
-    const featuredUntil =
-      toolSeed.featured
-        ? new Date(Date.now() + 1000 * 60 * 60 * 24 * 30 * (1 + (index % 3)))
-        : null;
+    const featuredUntil = toolSeed.featured
+      ? new Date(Date.now() + 1000 * 60 * 60 * 24 * 30 * (1 + (index % 3)))
+      : null;
 
     const tool = await prisma.tool.upsert({
       where: { slug: toolSeed.slug },

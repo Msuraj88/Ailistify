@@ -1,4 +1,5 @@
 import type { DefaultSession } from "next-auth";
+import type { UserRole } from "@/generated/prisma/client";
 import type {
   Category,
   Review,
@@ -7,11 +8,22 @@ import type {
 } from "@/generated/prisma/client";
 
 declare module "next-auth" {
+  interface User {
+    role?: UserRole;
+  }
+
   interface Session {
     user: {
       id: string;
-      role?: string;
+      role?: UserRole;
     } & DefaultSession["user"];
+  }
+}
+
+declare module "@auth/core/jwt" {
+  interface JWT {
+    id?: string;
+    role?: UserRole;
   }
 }
 

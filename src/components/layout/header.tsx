@@ -5,6 +5,7 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Logo } from "@/components/shared/logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { UserNav } from "@/components/layout/user-nav";
 import { Button } from "@/components/ui/button";
 import { NAV_LINKS } from "@/constants";
 
@@ -33,6 +34,7 @@ export function Header() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
+          <UserNav />
           <Button asChild size="sm" className="hidden sm:inline-flex">
             <Link href="/submit">Submit Tool</Link>
           </Button>
