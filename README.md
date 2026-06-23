@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+
 # AIListify
 
 A production-ready AI tools directory built with Next.js 15, TypeScript, Tailwind CSS, Shadcn UI, Prisma, PostgreSQL, and Auth.js.
@@ -80,7 +81,7 @@ src/
 ├── types/            # TypeScript type definitions
 ├── constants/        # App constants
 ├── validations/      # Zod schemas
-└── prisma/           # Prisma schema & migrations
+prisma/               # Prisma schema & migrations
 ```
 
 ## Environment Variables
@@ -89,7 +90,8 @@ See `.env.example` for all required variables.
 
 ## License
 
-MIT
-=======
+# MIT
+
 # Ailistify
->>>>>>> c3e811c4e4a427c53d2ee21bee2bb36a2d80a304
+
+> > > > > > > c3e811c4e4a427c53d2ee21bee2bb36a2d80a304

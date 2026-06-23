@@ -10,16 +10,7 @@ export const submitToolSchema = z.object({
     .string()
     .min(20, "Description must be at least 20 characters")
     .max(500, "Description must be less than 500 characters"),
-  category: z.string().min(1, "Please select a category"),
-  tags: z
-    .string()
-    .min(1, "Add at least one tag")
-    .transform((val) =>
-      val
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean),
-    ),
+  categoryId: z.string().min(1, "Please select a category"),
   submitterEmail: z.email("Please enter a valid email"),
 });
 
@@ -37,3 +28,20 @@ export const contactSchema = z.object({
 
 export type ContactInput = z.input<typeof contactSchema>;
 export type ContactData = z.output<typeof contactSchema>;
+
+export const reviewSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  content: z
+    .string()
+    .min(10, "Review must be at least 10 characters")
+    .max(2000, "Review must be less than 2000 characters"),
+  toolId: z.string().min(1),
+});
+
+export type ReviewInput = z.input<typeof reviewSchema>;
+
+export const newsletterSchema = z.object({
+  email: z.email("Please enter a valid email"),
+});
+
+export type NewsletterInput = z.input<typeof newsletterSchema>;

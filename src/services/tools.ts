@@ -1,9 +1,13 @@
 import { prisma } from "@/lib/prisma";
+import { ToolStatus } from "@/generated/prisma/client";
 import type { Tool } from "@/types";
+
+const publishedWhere = { status: ToolStatus.PUBLISHED } as const;
 
 export async function getPublishedTools(limit?: number): Promise<Tool[]> {
   return prisma.tool.findMany({
-    where: { published: true },
+    where: publishedWhere,
+    include: { category: true },
     orderBy: { createdAt: "desc" },
     take: limit,
   });
@@ -11,24 +15,30 @@ export async function getPublishedTools(limit?: number): Promise<Tool[]> {
 
 export async function getFeaturedTools(limit = 6): Promise<Tool[]> {
   return prisma.tool.findMany({
-    where: { published: true, featured: true },
+    where: { ...publishedWhere, featured: true },
+    include: { category: true },
     orderBy: { createdAt: "desc" },
     take: limit,
   });
 }
 
 export async function getToolBySlug(slug: string): Promise<Tool | null> {
-  return prisma.tool.findUnique({
-    where: { slug, published: true },
+  return prisma.tool.findFirst({
+    where: { slug, status: ToolStatus.PUBLISHED },
+    include: { category: true, images: true, reviews: true },
   });
 }
 
 export async function getToolsByCategory(
-  category: string,
+  categorySlug: string,
   limit?: number,
 ): Promise<Tool[]> {
   return prisma.tool.findMany({
-    where: { published: true, category },
+    where: {
+      status: ToolStatus.PUBLISHED,
+      category: { slug: categorySlug },
+    },
+    include: { category: true },
     orderBy: { createdAt: "desc" },
     take: limit,
   });

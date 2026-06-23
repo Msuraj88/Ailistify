@@ -30,7 +30,9 @@ type CategoryCardProps = {
 };
 
 export function CategoryCard({ category }: CategoryCardProps) {
-  const Icon = iconMap[category.icon] ?? Zap;
+  const Icon: LucideIcon = category.icon
+    ? (iconMap[category.icon] ?? Zap)
+    : Zap;
 
   return (
     <Link href={`/categories/${category.slug}`} className="group block">

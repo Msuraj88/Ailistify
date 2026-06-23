@@ -8,15 +8,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { Tool } from "@/types";
+import type { ToolCardData } from "@/types";
 
 type ToolCardProps = {
-  tool: Pick<Tool, "name" | "slug" | "description" | "category"> & {
-    tags: readonly string[];
-  };
+  tool: ToolCardData;
 };
 
 export function ToolCard({ tool }: ToolCardProps) {
+  const categoryLabel =
+    typeof tool.category === "string" ? tool.category : tool.category.name;
+
   return (
     <Card className="group relative transition-shadow hover:shadow-md">
       <CardHeader className="pb-3">
@@ -35,14 +36,14 @@ export function ToolCard({ tool }: ToolCardProps) {
           />
         </div>
         <Badge variant="secondary" className="w-fit">
-          {tool.category}
+          {categoryLabel}
         </Badge>
       </CardHeader>
       <CardContent>
         <CardDescription className="line-clamp-2 text-sm">
           {tool.description}
         </CardDescription>
-        {tool.tags.length > 0 && (
+        {tool.tags && tool.tags.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-1.5">
             {tool.tags.slice(0, 3).map((tag) => (
               <Badge key={tag} variant="outline" className="text-xs">

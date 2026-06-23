@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { ToolStatus } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
@@ -26,11 +27,14 @@ export async function submitTool(
     };
   }
 
-  const { name, websiteUrl, description, category, tags } = parsed.data;
+  const { name, websiteUrl, description, categoryId } = parsed.data;
   const slug = slugify(name);
 
   try {
-    const existing = await prisma.tool.findUnique({ where: { slug } });
+    const [existing, category] = await Promise.all([
+      prisma.tool.findUnique({ where: { slug } }),
+      prisma.category.findUnique({ where: { id: categoryId } }),
+    ]);
 
     if (existing) {
       return {
@@ -39,16 +43,22 @@ export async function submitTool(
       };
     }
 
+    if (!category) {
+      return { success: false, error: "Selected category does not exist." };
+    }
+
     const tool = await prisma.tool.create({
       data: {
         name,
         slug,
-        description,
+        shortDescription: description,
+        fullDescription: description,
         websiteUrl,
-        category,
-        tags,
-        published: false,
+        categoryId,
+        submittedById: session.user.id,
+        status: ToolStatus.PENDING,
         featured: false,
+        verified: false,
       },
     });
 
