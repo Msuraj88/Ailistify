@@ -1,0 +1,8 @@
+{
+  "extends": [
+    "next/core-web-vitals",
+    "next/typescript",
+    "plugin:prettier/recommended"
+  ],
+  "ignorePatterns": ["src/generated/**", ".next/**", "node_modules/**"]
+}
