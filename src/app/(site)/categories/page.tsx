@@ -1,22 +1,43 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
+import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { DirectoryGridSkeleton } from "@/components/directory/directory-skeletons";
 import { DirectorySearchBar } from "@/components/directory/directory-search-bar";
 import { CategoryCard } from "@/components/tools/category-card";
 import { EmptyState } from "@/components/admin/empty-state";
-import { createPageMetadata } from "@/lib/metadata";
+import { createSeoMetadata } from "@/lib/metadata";
+import { buildSearchNoIndex } from "@/lib/seo/pagination";
 import { getDirectoryCategories } from "@/services/directory/categories";
 import { directorySearchSchema } from "@/validations/directory";
-
-export const metadata = createPageMetadata({
-  title: "AI Tool Categories",
-  description:
-    "Browse AI tools by category — productivity, development, design, marketing, and more.",
-  path: "/categories",
-});
 
 type CategoriesPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
+
+export async function generateMetadata({
+  searchParams,
+}: CategoriesPageProps): Promise<Metadata> {
+  const rawParams = await searchParams;
+  const filters = directorySearchSchema.parse({
+    q: Array.isArray(rawParams.q) ? rawParams.q[0] : rawParams.q,
+  });
+
+  const title = filters.q?.trim()
+    ? `Categories matching "${filters.q.trim()}"`
+    : "AI Tool Categories";
+  const description = filters.q?.trim()
+    ? `Search results for categories matching "${filters.q.trim()}" in AIListify.`
+    : "Browse AI tools by category — productivity, development, design, marketing, and more.";
+
+  return createSeoMetadata({
+    title,
+    description,
+    path: filters.q?.trim()
+      ? `/categories?q=${encodeURIComponent(filters.q.trim())}`
+      : "/categories",
+    noIndex: buildSearchNoIndex("/categories", filters.q),
+  });
+}
 
 export default async function CategoriesPage({
   searchParams,
@@ -30,6 +51,13 @@ export default async function CategoriesPage({
 
   return (
     <div className="container mx-auto space-y-8 px-4 py-10 sm:px-6 lg:px-8">
+      <Breadcrumbs
+        items={[
+          { name: "Home", path: "/" },
+          { name: "Categories", path: "/categories" },
+        ]}
+      />
+
       <div>
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           Categories

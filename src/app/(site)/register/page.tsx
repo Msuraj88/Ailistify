@@ -1,9 +1,10 @@
 import { RegisterForm } from "@/components/auth/register-form";
-import { createMetadata } from "@/lib/metadata";
+import { createNoIndexMetadata } from "@/lib/metadata";
 
-export const metadata = createMetadata({
+export const metadata = createNoIndexMetadata({
   title: "Create Account",
   description: "Create your AIListify account to submit and bookmark AI tools.",
+  path: "/register",
 });
 
 export default function RegisterPage() {

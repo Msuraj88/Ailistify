@@ -5,6 +5,11 @@ import { createMetadata } from "@/lib/metadata";
 export const metadata = createMetadata({
   title: "Admin",
   description: "AIListify admin dashboard.",
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: { index: false, follow: false },
+  },
 });
 
 export default async function AdminLayout({

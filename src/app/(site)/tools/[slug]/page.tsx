@@ -1,8 +1,11 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/seo/breadcrumbs";
+import { JsonLd } from "@/components/seo/json-ld";
 import { ToolDetailContent } from "@/components/directory/tool-detail-content";
-import { createPageMetadata } from "@/lib/metadata";
-import { absoluteUrl } from "@/lib/utils";
+import { createNoIndexMetadata, createSeoMetadata } from "@/lib/metadata";
+import { buildSoftwareApplicationSchema } from "@/lib/seo/json-ld";
+import { getToolOgImage } from "@/lib/seo/tool-metadata";
 import {
   getDirectoryToolBySlug,
   getRelatedTools,
@@ -19,7 +22,7 @@ export async function generateMetadata({
   const tool = await getDirectoryToolBySlug(slug);
 
   if (!tool) {
-    return createPageMetadata({
+    return createNoIndexMetadata({
       title: "Tool Not Found",
       description: "The requested AI tool could not be found.",
       path: `/tools/${slug}`,
@@ -29,10 +32,12 @@ export async function generateMetadata({
   const title = tool.metaTitle ?? tool.name;
   const description = tool.metaDescription ?? tool.shortDescription;
 
-  return createPageMetadata({
+  return createSeoMetadata({
     title,
     description,
-    path: `/tools/${slug}`,
+    path: `/tools/${tool.slug}`,
+    ogImage: getToolOgImage(tool),
+    ogType: "article",
   });
 }
 
@@ -45,28 +50,17 @@ export default async function ToolDetailPage({ params }: ToolDetailPageProps) {
   }
 
   const relatedTools = await getRelatedTools(tool.id, tool.category.id);
-
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    name: tool.name,
-    description: tool.shortDescription,
-    applicationCategory: tool.category.name,
-    url: absoluteUrl(`/tools/${tool.slug}`),
-    offers: {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "USD",
-      description: tool.pricingModel,
-    },
-  };
+  const breadcrumbs = [
+    { name: "Home", path: "/" },
+    { name: "Browse AI Tools", path: "/tools" },
+    { name: tool.category.name, path: `/category/${tool.category.slug}` },
+    { name: tool.name, path: `/tools/${tool.slug}` },
+  ];
 
   return (
     <div className="container mx-auto px-4 py-10 sm:px-6 lg:px-8">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={buildSoftwareApplicationSchema(tool)} />
+      <Breadcrumbs items={breadcrumbs} />
       <ToolDetailContent tool={tool} relatedTools={relatedTools} />
     </div>
   );

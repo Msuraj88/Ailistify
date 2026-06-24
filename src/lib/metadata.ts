@@ -7,7 +7,7 @@ export const siteConfig = {
   description:
     "Curated directory of the best AI tools for productivity, development, design, marketing, and more. Find, compare, and explore cutting-edge AI software.",
   url: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
-  ogImage: "/og-image.png",
+  ogImage: "/opengraph-image",
   keywords: [
     "AI tools",
     "artificial intelligence",
@@ -24,34 +24,94 @@ export const siteConfig = {
   creator: "AIListify",
 } as const;
 
-export function createPageMetadata({
-  title,
-  description,
-  path,
-}: {
+export type SeoMetadataOptions = {
   title: string;
   description: string;
   path: string;
-}): Metadata {
+  ogImage?: string | null;
+  ogType?: "website" | "article";
+  noIndex?: boolean;
+  pagination?: {
+    previous?: string;
+    next?: string;
+  };
+};
+
+function resolveOgImage(ogImage?: string | null) {
+  if (ogImage?.trim()) {
+    return ogImage.startsWith("http") ? ogImage : absoluteUrl(ogImage);
+  }
+
+  return absoluteUrl(siteConfig.ogImage);
+}
+
+export function createSeoMetadata({
+  title,
+  description,
+  path,
+  ogImage,
+  ogType = "website",
+  noIndex = false,
+  pagination,
+}: SeoMetadataOptions): Metadata {
   const url = absoluteUrl(path);
+  const imageUrl = resolveOgImage(ogImage);
 
   return createMetadata({
     title,
     description,
     alternates: { canonical: url },
+    ...(pagination
+      ? {
+          pagination: {
+            ...(pagination.previous
+              ? { previous: absoluteUrl(pagination.previous) }
+              : {}),
+            ...(pagination.next ? { next: absoluteUrl(pagination.next) } : {}),
+          },
+        }
+      : {}),
+    robots: noIndex
+      ? {
+          index: false,
+          follow: true,
+          googleBot: { index: false, follow: true },
+        }
+      : undefined,
     openGraph: {
+      type: ogType,
       title,
       description,
       url,
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
     },
     twitter: {
+      card: "summary_large_image",
       title,
       description,
+      images: [imageUrl],
     },
   });
 }
 
+export function createPageMetadata(options: SeoMetadataOptions): Metadata {
+  return createSeoMetadata(options);
+}
+
+export function createNoIndexMetadata(options: SeoMetadataOptions): Metadata {
+  return createSeoMetadata({ ...options, noIndex: true });
+}
+
 export function createMetadata(overrides?: Partial<Metadata>): Metadata {
+  const defaultImage = absoluteUrl(siteConfig.ogImage);
+
   return {
     metadataBase: new URL(siteConfig.url),
     title: {
@@ -71,7 +131,7 @@ export function createMetadata(overrides?: Partial<Metadata>): Metadata {
       siteName: siteConfig.name,
       images: [
         {
-          url: siteConfig.ogImage,
+          url: defaultImage,
           width: 1200,
           height: 630,
           alt: siteConfig.title,
@@ -82,7 +142,7 @@ export function createMetadata(overrides?: Partial<Metadata>): Metadata {
       card: "summary_large_image",
       title: siteConfig.title,
       description: siteConfig.description,
-      images: [siteConfig.ogImage],
+      images: [defaultImage],
       creator: "@ailistify",
     },
     robots: {

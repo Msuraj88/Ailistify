@@ -45,6 +45,10 @@ export type DirectoryToolDetail = {
   logo: string | null;
   websiteUrl: string;
   pricingUrl: string | null;
+  twitterUrl: string | null;
+  linkedinUrl: string | null;
+  youtubeUrl: string | null;
+  discordUrl: string | null;
   shortDescription: string;
   fullDescription: string;
   pricingModel: PricingModel;

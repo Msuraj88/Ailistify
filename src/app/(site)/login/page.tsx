@@ -1,10 +1,11 @@
 import { Suspense } from "react";
 import { LoginForm } from "@/components/auth/login-form";
-import { createMetadata } from "@/lib/metadata";
+import { createNoIndexMetadata } from "@/lib/metadata";
 
-export const metadata = createMetadata({
+export const metadata = createNoIndexMetadata({
   title: "Sign In",
   description: "Sign in to your AIListify account.",
+  path: "/login",
 });
 
 export default function LoginPage() {
