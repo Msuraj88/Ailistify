@@ -7,6 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 import { createAdminTool, updateAdminTool } from "@/actions/admin/tools";
+import { ToolLogoUpload } from "@/components/admin/tools/tool-logo-upload";
+import { ToolScreenshotsManager } from "@/components/admin/tools/tool-screenshots-manager";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -39,6 +41,7 @@ const defaultValues: ToolFormInput = {
   websiteUrl: "",
   pricingUrl: "",
   logo: "",
+  images: [],
   shortDescription: "",
   fullDescription: "",
   categoryId: "",
@@ -58,6 +61,13 @@ function mapToolToFormValues(tool: AdminToolDetail): ToolFormInput {
     websiteUrl: tool.websiteUrl,
     pricingUrl: tool.pricingUrl ?? "",
     logo: tool.logo ?? "",
+    images: tool.images.map((image) => ({
+      id: image.id,
+      imageUrl: image.imageUrl,
+      altText: image.altText ?? "",
+      caption: image.caption ?? "",
+      sortOrder: image.sortOrder,
+    })),
     shortDescription: tool.shortDescription,
     fullDescription: tool.fullDescription,
     categoryId: tool.categoryId,
@@ -204,18 +214,50 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
           </div>
 
           <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="logo">Logo URL</Label>
-            <Input
-              id="logo"
-              type="url"
-              disabled={isSubmitting}
-              {...register("logo")}
+            <Controller
+              name="logo"
+              control={control}
+              render={({ field }) => (
+                <ToolLogoUpload
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={isSubmitting}
+                />
+              )}
             />
             {errors.logo && (
               <p className="text-sm text-destructive">{errors.logo.message}</p>
             )}
           </div>
         </div>
+      </section>
+
+      <section className="space-y-4 rounded-lg border bg-card p-6">
+        <div>
+          <h2 className="text-lg font-semibold">Screenshots</h2>
+          <p className="text-sm text-muted-foreground">
+            Upload product screenshots. Drag to reorder before saving.
+          </p>
+        </div>
+
+        <Controller
+          name="images"
+          control={control}
+          render={({ field }) => (
+            <ToolScreenshotsManager
+              value={field.value ?? []}
+              onChange={field.onChange}
+              disabled={isSubmitting}
+            />
+          )}
+        />
+        {errors.images && (
+          <p className="text-sm text-destructive">
+            {typeof errors.images.message === "string"
+              ? errors.images.message
+              : "Please check screenshot fields."}
+          </p>
+        )}
       </section>
 
       <section className="space-y-4 rounded-lg border bg-card p-6">

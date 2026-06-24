@@ -5,6 +5,7 @@ import { ToolOutboundButton } from "@/components/directory/tool-outbound-button"
 import { ToolViewTracker } from "@/components/directory/tool-view-tracker";
 import { ToolsGrid } from "@/components/directory/tools-grid";
 import { Badge } from "@/components/ui/badge";
+import { buildImageKitUrl } from "@/lib/imagekit/client";
 import type { DirectoryToolCard, DirectoryToolDetail } from "@/types/directory";
 
 type ToolDetailContentProps = {
@@ -17,7 +18,7 @@ function ToolLogo({ logo, name }: { logo: string | null; name: string }) {
     return (
       <div className="relative h-20 w-20 overflow-hidden rounded-xl border bg-background sm:h-24 sm:w-24">
         <Image
-          src={logo}
+          src={buildImageKitUrl(logo, "logo")}
           alt={`${name} logo`}
           fill
           className="object-cover"
@@ -138,7 +139,7 @@ export function ToolDetailContent({
                 >
                   <div className="relative aspect-video w-full">
                     <Image
-                      src={image.imageUrl}
+                      src={buildImageKitUrl(image.imageUrl, "screenshot")}
                       alt={image.altText ?? `${tool.name} screenshot`}
                       fill
                       className="object-cover"

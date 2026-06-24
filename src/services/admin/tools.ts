@@ -117,6 +117,17 @@ export async function getAdminToolById(
       metaTitle: true,
       metaDescription: true,
       tags: { select: { tagId: true } },
+      images: {
+        orderBy: { sortOrder: "asc" },
+        select: {
+          id: true,
+          imageUrl: true,
+          altText: true,
+          caption: true,
+          sortOrder: true,
+          isPrimary: true,
+        },
+      },
     },
   });
 
@@ -135,6 +146,7 @@ export async function getAdminToolById(
     fullDescription: tool.fullDescription,
     categoryId: tool.categoryId,
     tagIds: tool.tags.map((tag) => tag.tagId),
+    images: tool.images,
     pricingModel: tool.pricingModel,
     featured: tool.featured,
     verified: tool.verified,

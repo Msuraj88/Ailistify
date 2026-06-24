@@ -9,6 +9,22 @@ const optionalUrl = z
     "Please enter a valid URL",
   );
 
+export const toolImageFormSchema = z.object({
+  id: z.string().optional(),
+  imageUrl: z.url("Please enter a valid image URL"),
+  altText: z
+    .string()
+    .max(200, "Alt text must be less than 200 characters")
+    .optional()
+    .or(z.literal("")),
+  caption: z
+    .string()
+    .max(300, "Caption must be less than 300 characters")
+    .optional()
+    .or(z.literal("")),
+  sortOrder: z.number().int().min(0),
+});
+
 export const toolFormSchema = z.object({
   name: z
     .string()
@@ -25,6 +41,7 @@ export const toolFormSchema = z.object({
   websiteUrl: z.url("Please enter a valid website URL"),
   pricingUrl: optionalUrl,
   logo: optionalUrl,
+  images: z.array(toolImageFormSchema).default([]),
   shortDescription: z
     .string()
     .min(20, "Short description must be at least 20 characters")
@@ -53,6 +70,7 @@ export const toolFormSchema = z.object({
 
 export type ToolFormInput = z.input<typeof toolFormSchema>;
 export type ToolFormData = z.output<typeof toolFormSchema>;
+export type ToolImageFormInput = z.infer<typeof toolImageFormSchema>;
 
 export const toolListFiltersSchema = z.object({
   q: z.string().optional(),

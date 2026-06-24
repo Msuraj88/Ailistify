@@ -27,6 +27,15 @@ export type AdminToolFormOptions = {
   tags: { id: string; name: string }[];
 };
 
+export type AdminToolImage = {
+  id: string;
+  imageUrl: string;
+  altText: string | null;
+  caption: string | null;
+  sortOrder: number;
+  isPrimary: boolean;
+};
+
 export type AdminToolDetail = {
   id: string;
   name: string;
@@ -38,6 +47,7 @@ export type AdminToolDetail = {
   fullDescription: string;
   categoryId: string;
   tagIds: string[];
+  images: AdminToolImage[];
   pricingModel: PricingModel;
   featured: boolean;
   verified: boolean;

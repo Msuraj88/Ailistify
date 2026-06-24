@@ -4,9 +4,15 @@ import { revalidatePath } from "next/cache";
 import { ToolStatus } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
 import { hasRole } from "@/lib/auth/roles";
+import { isImageKitConfigured } from "@/lib/imagekit/config";
+import { isImageKitUrl } from "@/lib/imagekit/server";
 import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/types";
-import { toolFormSchema, type ToolFormInput } from "@/validations/admin-tools";
+import {
+  toolFormSchema,
+  type ToolFormData,
+  type ToolFormInput,
+} from "@/validations/admin-tools";
 
 const ADMIN_PATHS = ["/admin/tools", "/tools"];
 
@@ -65,6 +71,55 @@ async function isSlugTaken(slug: string, excludeId?: string) {
   return existing.id !== excludeId;
 }
 
+function validateImageKitMedia(data: ToolFormData): string | null {
+  if (!isImageKitConfigured()) {
+    return null;
+  }
+
+  const logo = data.logo?.trim();
+  if (logo && !isImageKitUrl(logo)) {
+    return "Logo must be uploaded via ImageKit.";
+  }
+
+  for (const image of data.images) {
+    if (!isImageKitUrl(image.imageUrl)) {
+      return "All screenshots must be uploaded via ImageKit.";
+    }
+  }
+
+  return null;
+}
+
+function buildToolImageRecords(toolId: string, data: ToolFormData) {
+  return data.images.map((image, index) => ({
+    toolId,
+    imageUrl: image.imageUrl,
+    altText: normalizeOptionalText(image.altText),
+    caption: normalizeOptionalText(image.caption),
+    sortOrder: image.sortOrder ?? index,
+    isPrimary: index === 0,
+  }));
+}
+
+async function syncToolImages(
+  tx: Omit<
+    typeof prisma,
+    "$connect" | "$disconnect" | "$on" | "$transaction" | "$extends"
+  >,
+  toolId: string,
+  data: ToolFormData,
+) {
+  await tx.toolImage.deleteMany({ where: { toolId } });
+
+  if (data.images.length === 0) {
+    return;
+  }
+
+  await tx.toolImage.createMany({
+    data: buildToolImageRecords(toolId, data),
+  });
+}
+
 export async function createAdminTool(
   input: ToolFormInput,
 ): Promise<ActionResult<{ id: string }>> {
@@ -82,6 +137,11 @@ export async function createAdminTool(
   }
 
   const data = parsed.data;
+
+  const mediaError = validateImageKitMedia(data);
+  if (mediaError) {
+    return { success: false, error: mediaError };
+  }
 
   try {
     const [categoryExists, slugTaken, tagsValid] = await Promise.all([
@@ -135,6 +195,8 @@ export async function createAdminTool(
         });
       }
 
+      await syncToolImages(tx, created.id, data);
+
       return created;
     });
 
@@ -167,6 +229,11 @@ export async function updateAdminTool(
   }
 
   const data = parsed.data;
+
+  const mediaError = validateImageKitMedia(data);
+  if (mediaError) {
+    return { success: false, error: mediaError };
+  }
 
   try {
     const existing = await prisma.tool.findUnique({
@@ -230,6 +297,8 @@ export async function updateAdminTool(
           })),
         });
       }
+
+      await syncToolImages(tx, id, data);
     });
 
     revalidateToolPaths();

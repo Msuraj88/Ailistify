@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { buildImageKitUrl } from "@/lib/imagekit/client";
 import type { DirectoryToolCard } from "@/types/directory";
 
 type ToolCardProps = {
@@ -20,7 +21,7 @@ function ToolLogo({ logo, name }: { logo: string | null; name: string }) {
     return (
       <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border bg-background">
         <Image
-          src={logo}
+          src={buildImageKitUrl(logo, "thumbnail")}
           alt={`${name} logo`}
           fill
           className="object-cover"
