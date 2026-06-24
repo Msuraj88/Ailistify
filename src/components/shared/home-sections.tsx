@@ -242,7 +242,7 @@ export function SubmitToolCtaSection() {
           </p>
           <div className="mt-8">
             <Button size="lg" asChild>
-              <Link href="/submit">Submit Your Tool</Link>
+              <Link href="/submit-tool">Submit Your Tool</Link>
             </Button>
           </div>
         </div>

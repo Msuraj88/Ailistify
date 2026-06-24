@@ -71,8 +71,10 @@ export type ImageKitUploadResult = {
   filePath: string;
 };
 
-export async function fetchImageKitAuth(): Promise<ImageKitUploadAuth> {
-  const response = await fetch("/api/imagekit/auth", {
+export async function fetchImageKitAuth(
+  endpoint = "/api/imagekit/auth",
+): Promise<ImageKitUploadAuth> {
+  const response = await fetch(endpoint, {
     method: "GET",
     credentials: "include",
     cache: "no-store",
@@ -93,8 +95,9 @@ export async function fetchImageKitAuth(): Promise<ImageKitUploadAuth> {
 export async function uploadFileToImageKit(
   file: File,
   folder: string,
+  authEndpoint = "/api/imagekit/auth",
 ): Promise<ImageKitUploadResult> {
-  const auth = await fetchImageKitAuth();
+  const auth = await fetchImageKitAuth(authEndpoint);
 
   const formData = new FormData();
   formData.append("file", file);

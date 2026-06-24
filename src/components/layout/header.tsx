@@ -39,7 +39,7 @@ export function Header() {
           <ThemeToggle />
           <UserNav />
           <Button asChild size="sm" className="hidden sm:inline-flex">
-            <Link href="/submit">Submit Tool</Link>
+            <Link href="/submit-tool">Submit Tool</Link>
           </Button>
 
           <Button
@@ -76,7 +76,10 @@ export function Header() {
               </Link>
             ))}
             <Button asChild size="sm" className="mt-2 w-full">
-              <Link href="/submit" onClick={() => setMobileMenuOpen(false)}>
+              <Link
+                href="/submit-tool"
+                onClick={() => setMobileMenuOpen(false)}
+              >
                 Submit Tool
               </Link>
             </Button>

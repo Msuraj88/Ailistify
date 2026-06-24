@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
+  Check,
   ExternalLink,
   Loader2,
   MoreHorizontal,
@@ -12,12 +13,15 @@ import {
   Star,
   Trash2,
   BadgeCheck,
+  X,
 } from "lucide-react";
+import { approveToolSubmission, publishTool } from "@/actions/admin/moderation";
 import {
   toggleAdminToolFeatured,
   toggleAdminToolVerified,
 } from "@/actions/admin/tools";
 import { DeleteToolDialog } from "@/components/admin/tools/delete-tool-dialog";
+import { RejectSubmissionDialog } from "@/components/admin/tools/reject-submission-dialog";
 import { ToolStatusBadge } from "@/components/admin/tools/tool-status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -77,8 +81,14 @@ function ToolLogo({ logo, name }: { logo: string | null; name: string }) {
 function ToolRowActions({ tool }: { tool: AdminToolListItem }) {
   const router = useRouter();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [rejectOpen, setRejectOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const isPendingSubmission = tool.status === "PENDING";
+  const canPublish =
+    tool.status === "PENDING" ||
+    tool.status === "DRAFT" ||
+    tool.status === "REJECTED";
 
   function runAction(action: () => Promise<ActionResult<unknown>>) {
     setActionError(null);
@@ -124,6 +134,34 @@ function ToolRowActions({ tool }: { tool: AdminToolListItem }) {
                 Edit
               </Link>
             </DropdownMenuItem>
+            {isPendingSubmission && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() =>
+                    runAction(() => approveToolSubmission(tool.id))
+                  }
+                >
+                  <Check className="mr-2 h-4 w-4" />
+                  Approve & publish
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setRejectOpen(true)}>
+                  <X className="mr-2 h-4 w-4" />
+                  Reject
+                </DropdownMenuItem>
+              </>
+            )}
+            {!isPendingSubmission && canPublish && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => runAction(() => publishTool(tool.id))}
+                >
+                  <Check className="mr-2 h-4 w-4" />
+                  Publish
+                </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => runAction(() => toggleAdminToolFeatured(tool.id))}
@@ -154,6 +192,14 @@ function ToolRowActions({ tool }: { tool: AdminToolListItem }) {
         toolName={tool.name}
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
+      />
+
+      <RejectSubmissionDialog
+        toolId={tool.id}
+        toolName={tool.name}
+        open={rejectOpen}
+        onOpenChange={setRejectOpen}
+        onSuccess={() => router.refresh()}
       />
     </>
   );

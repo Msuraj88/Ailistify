@@ -1,7 +1,7 @@
 export const NAV_LINKS = [
   { href: "/tools", label: "Browse Tools" },
   { href: "/categories", label: "Categories" },
-  { href: "/submit", label: "Submit Tool" },
+  { href: "/submit-tool", label: "Submit Tool" },
   { href: "/about", label: "About" },
 ] as const;
 
@@ -9,7 +9,7 @@ export const FOOTER_LINKS = {
   product: [
     { href: "/tools", label: "All Tools" },
     { href: "/categories", label: "Categories" },
-    { href: "/submit", label: "Submit a Tool" },
+    { href: "/submit-tool", label: "Submit a Tool" },
     { href: "/featured", label: "Featured" },
   ],
   company: [

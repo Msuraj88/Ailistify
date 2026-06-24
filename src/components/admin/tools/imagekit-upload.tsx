@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 
 type ImageKitUploadProps = {
   folder: string;
+  authEndpoint?: string;
   value?: string | null;
   fileId?: string | null;
   onChange: (value: { url: string; fileId: string } | null) => void;
@@ -28,6 +29,7 @@ type ImageKitUploadProps = {
 
 type ImageKitMultiUploadProps = {
   folder: string;
+  authEndpoint?: string;
   disabled?: boolean;
   label?: string;
   description?: string;
@@ -60,7 +62,13 @@ export function ImageKitUpload(props: Props) {
             throw new Error(validationError);
           }
 
-          const result = await uploadFileToImageKit(file, props.folder);
+          const authEndpoint =
+            "authEndpoint" in props ? props.authEndpoint : undefined;
+          const result = await uploadFileToImageKit(
+            file,
+            props.folder,
+            authEndpoint,
+          );
 
           if (props.multiple) {
             props.onUpload(result);
