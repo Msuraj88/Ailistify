@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FolderTree } from "lucide-react";
+import { Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -7,27 +7,29 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { DirectoryCategoryCard } from "@/types/directory";
+import type { DirectoryTagCard } from "@/types/directory";
 
-type CategoryCardProps = {
-  category: DirectoryCategoryCard;
+type TagCardProps = {
+  tag: DirectoryTagCard;
 };
 
-export function CategoryCard({ category }: CategoryCardProps) {
+export function TagCard({ tag }: TagCardProps) {
   return (
-    <Link href={`/category/${category.slug}`} className="group block h-full">
+    <Link href={`/tag/${tag.slug}`} className="group block h-full">
       <Card className="h-full transition-all hover:border-primary/50 hover:shadow-md">
         <CardHeader>
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-              <FolderTree className="h-5 w-5" aria-hidden="true" />
+              <Tag className="h-5 w-5" aria-hidden="true" />
             </div>
-            <Badge variant="secondary">{category.toolCount} tools</Badge>
+            <Badge variant="secondary">{tag.toolCount} tools</Badge>
           </div>
-          <CardTitle className="text-base">{category.name}</CardTitle>
-          <CardDescription className="line-clamp-2">
-            {category.description}
-          </CardDescription>
+          <CardTitle className="text-base">{tag.name}</CardTitle>
+          {tag.description && (
+            <CardDescription className="line-clamp-2">
+              {tag.description}
+            </CardDescription>
+          )}
         </CardHeader>
       </Card>
     </Link>

@@ -24,6 +24,33 @@ export const siteConfig = {
   creator: "AIListify",
 } as const;
 
+export function createPageMetadata({
+  title,
+  description,
+  path,
+}: {
+  title: string;
+  description: string;
+  path: string;
+}): Metadata {
+  const url = absoluteUrl(path);
+
+  return createMetadata({
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+    },
+    twitter: {
+      title,
+      description,
+    },
+  });
+}
+
 export function createMetadata(overrides?: Partial<Metadata>): Metadata {
   return {
     metadataBase: new URL(siteConfig.url),

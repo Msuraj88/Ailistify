@@ -3,7 +3,12 @@ import { ArrowRight, Search, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function HeroSection() {
+type HeroSectionProps = {
+  totalTools: number;
+  popularSearches: { name: string; slug: string }[];
+};
+
+export function HeroSection({ totalTools, popularSearches }: HeroSectionProps) {
   return (
     <section className="relative overflow-hidden border-b">
       <div
@@ -14,7 +19,9 @@ export function HeroSection() {
         <div className="mx-auto max-w-3xl text-center">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-muted/50 px-4 py-1.5 text-sm">
             <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
-            <span>Curated directory of 500+ AI tools</span>
+            <span>
+              Curated directory of {totalTools.toLocaleString()}+ AI tools
+            </span>
           </div>
 
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
@@ -55,18 +62,20 @@ export function HeroSection() {
             </Button>
           </form>
 
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
-            <span>Popular:</span>
-            {["ChatGPT", "Midjourney", "Claude", "Copilot"].map((term) => (
-              <Link
-                key={term}
-                href={`/tools?q=${encodeURIComponent(term)}`}
-                className="rounded-full border px-3 py-1 transition-colors hover:border-primary hover:text-foreground"
-              >
-                {term}
-              </Link>
-            ))}
-          </div>
+          {popularSearches.length > 0 && (
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
+              <span>Popular:</span>
+              {popularSearches.map((term) => (
+                <Link
+                  key={term.slug}
+                  href={`/tools/${term.slug}`}
+                  className="rounded-full border px-3 py-1 transition-colors hover:border-primary hover:text-foreground"
+                >
+                  {term.name}
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>

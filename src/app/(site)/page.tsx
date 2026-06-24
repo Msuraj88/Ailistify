@@ -1,10 +1,7 @@
 import { HeroSection } from "@/components/shared/hero-section";
-import {
-  CategoriesSection,
-  CtaSection,
-  FeaturedToolsSection,
-} from "@/components/shared/home-sections";
+import { HomeSections } from "@/components/shared/home-sections";
 import { createMetadata } from "@/lib/metadata";
+import { getHomePageData } from "@/services/directory/home";
 
 export const metadata = createMetadata({
   title: "AIListify — Discover the Best AI Tools",
@@ -12,13 +9,16 @@ export const metadata = createMetadata({
     "Curated directory of the best AI tools for productivity, development, design, marketing, and more.",
 });
 
-export default function HomePage() {
+export default async function HomePage() {
+  const data = await getHomePageData();
+
   return (
     <>
-      <HeroSection />
-      <FeaturedToolsSection />
-      <CategoriesSection />
-      <CtaSection />
+      <HeroSection
+        totalTools={data.totalTools}
+        popularSearches={data.popularSearches}
+      />
+      <HomeSections data={data} />
     </>
   );
 }

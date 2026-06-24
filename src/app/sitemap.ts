@@ -1,8 +1,25 @@
 import type { MetadataRoute } from "next";
-import { TOOL_CATEGORIES } from "@/constants";
+import { ToolStatus } from "@/generated/prisma/client";
+import { prisma } from "@/lib/prisma";
 import { absoluteUrl } from "@/lib/utils";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const [tools, categories, tags] = await Promise.all([
+    prisma.tool.findMany({
+      where: { status: ToolStatus.PUBLISHED },
+      select: { slug: true, updatedAt: true },
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.category.findMany({
+      select: { slug: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.tag.findMany({
+      select: { slug: true, updatedAt: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
+
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: absoluteUrl("/"),
@@ -23,27 +40,33 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
-      url: absoluteUrl("/submit"),
+      url: absoluteUrl("/tags"),
       lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: absoluteUrl("/about"),
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.5,
+      changeFrequency: "weekly",
+      priority: 0.8,
     },
   ];
 
-  const categoryRoutes: MetadataRoute.Sitemap = TOOL_CATEGORIES.map(
-    (category) => ({
-      url: absoluteUrl(`/categories/${category.slug}`),
-      lastModified: new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 0.7,
-    }),
-  );
+  const toolRoutes: MetadataRoute.Sitemap = tools.map((tool) => ({
+    url: absoluteUrl(`/tools/${tool.slug}`),
+    lastModified: tool.updatedAt,
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
 
-  return [...staticRoutes, ...categoryRoutes];
+  const categoryRoutes: MetadataRoute.Sitemap = categories.map((category) => ({
+    url: absoluteUrl(`/category/${category.slug}`),
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
+
+  const tagRoutes: MetadataRoute.Sitemap = tags.map((tag) => ({
+    url: absoluteUrl(`/tag/${tag.slug}`),
+    lastModified: tag.updatedAt,
+    changeFrequency: "weekly" as const,
+    priority: 0.6,
+  }));
+
+  return [...staticRoutes, ...toolRoutes, ...categoryRoutes, ...tagRoutes];
 }
