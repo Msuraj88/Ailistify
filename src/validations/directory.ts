@@ -6,7 +6,15 @@ export const toolDirectoryFiltersSchema = z.object({
   category: z.string().optional(),
   tag: z.string().optional(),
   pricing: z.enum(PRICING_MODELS).optional(),
-  sort: z.enum(["latest", "views", "featured"]).default("latest"),
+  featured: z
+    .string()
+    .optional()
+    .transform((val) => (val === "true" ? true : undefined)),
+  verified: z
+    .string()
+    .optional()
+    .transform((val) => (val === "true" ? true : undefined)),
+  sort: z.enum(["latest", "views", "clicks", "name"]).default("latest"),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(6).max(48).default(12),
 });

@@ -3,6 +3,7 @@ import { DirectoryPagination } from "@/components/directory/directory-pagination
 import { ToolsPageSkeleton } from "@/components/directory/directory-skeletons";
 import { ToolsFilters } from "@/components/directory/tools-filters";
 import { ToolsGrid } from "@/components/directory/tools-grid";
+import { parseSearchParams } from "@/lib/directory/url-state";
 import { createPageMetadata } from "@/lib/metadata";
 import {
   getDirectoryFilterOptions,
@@ -23,14 +24,9 @@ type ToolsPageProps = {
 
 export default async function ToolsPage({ searchParams }: ToolsPageProps) {
   const rawParams = await searchParams;
-  const normalizedParams = Object.fromEntries(
-    Object.entries(rawParams).map(([key, value]) => [
-      key,
-      Array.isArray(value) ? value[0] : value,
-    ]),
+  const filters = toolDirectoryFiltersSchema.parse(
+    parseSearchParams(rawParams),
   );
-
-  const filters = toolDirectoryFiltersSchema.parse(normalizedParams);
 
   const [result, filterOptions] = await Promise.all([
     getDirectoryTools(filters),

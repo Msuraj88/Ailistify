@@ -36,7 +36,7 @@ export function FeaturedToolsSection({
             </p>
           </div>
           <Button variant="outline" asChild>
-            <Link href="/tools?sort=featured">
+            <Link href="/tools?featured=true">
               View all tools
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>

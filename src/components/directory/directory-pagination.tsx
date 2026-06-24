@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { buildToolsDirectoryHref } from "@/lib/directory/url-state";
 import { Button } from "@/components/ui/button";
 import type { ToolDirectoryFilters } from "@/validations/directory";
 
@@ -10,30 +11,6 @@ type DirectoryPaginationProps = {
   basePath?: string;
   scoped?: boolean;
 };
-
-function buildPageHref(
-  filters: ToolDirectoryFilters,
-  page: number,
-  basePath: string,
-  scoped = false,
-) {
-  const params = new URLSearchParams();
-
-  if (!scoped) {
-    if (filters.q) params.set("q", filters.q);
-    if (filters.category) params.set("category", filters.category);
-    if (filters.tag) params.set("tag", filters.tag);
-    if (filters.pricing) params.set("pricing", filters.pricing);
-    if (filters.sort && filters.sort !== "latest") {
-      params.set("sort", filters.sort);
-    }
-  }
-
-  if (page > 1) params.set("page", String(page));
-
-  const query = params.toString();
-  return query ? `${basePath}?${query}` : basePath;
-}
 
 export function DirectoryPagination({
   filters,
@@ -56,7 +33,13 @@ export function DirectoryPagination({
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm" asChild disabled={!prevPage}>
           {prevPage ? (
-            <Link href={buildPageHref(filters, prevPage, basePath, scoped)}>
+            <Link
+              href={buildToolsDirectoryHref(filters, {
+                basePath,
+                page: prevPage,
+                scoped,
+              })}
+            >
               <ChevronLeft className="h-4 w-4" />
               Previous
             </Link>
@@ -74,7 +57,13 @@ export function DirectoryPagination({
 
         <Button variant="outline" size="sm" asChild disabled={!nextPage}>
           {nextPage ? (
-            <Link href={buildPageHref(filters, nextPage, basePath, scoped)}>
+            <Link
+              href={buildToolsDirectoryHref(filters, {
+                basePath,
+                page: nextPage,
+                scoped,
+              })}
+            >
               Next
               <ChevronRight className="h-4 w-4" />
             </Link>

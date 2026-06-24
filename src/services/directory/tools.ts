@@ -1,4 +1,3 @@
-import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import type {
   DirectoryToolDetail,
@@ -7,57 +6,21 @@ import type {
 } from "@/types/directory";
 import type { ToolDirectoryFilters } from "@/validations/directory";
 import {
+  buildToolDirectoryOrderBy,
+  buildToolDirectoryWhere,
+} from "@/services/directory/query";
+import {
   mapToolCard,
   PUBLISHED_TOOL_WHERE,
   toolCardSelect,
 } from "@/services/directory/shared";
 
-function buildWhere(filters: ToolDirectoryFilters): Prisma.ToolWhereInput {
-  const where: Prisma.ToolWhereInput = { ...PUBLISHED_TOOL_WHERE };
-
-  if (filters.q?.trim()) {
-    const q = filters.q.trim();
-    where.OR = [
-      { name: { contains: q, mode: "insensitive" } },
-      { slug: { contains: q, mode: "insensitive" } },
-      { shortDescription: { contains: q, mode: "insensitive" } },
-    ];
-  }
-
-  if (filters.category) {
-    where.category = { slug: filters.category };
-  }
-
-  if (filters.tag) {
-    where.tags = { some: { tag: { slug: filters.tag } } };
-  }
-
-  if (filters.pricing) {
-    where.pricingModel = filters.pricing;
-  }
-
-  return where;
-}
-
-function buildOrderBy(
-  sort: ToolDirectoryFilters["sort"],
-): Prisma.ToolOrderByWithRelationInput[] {
-  switch (sort) {
-    case "views":
-      return [{ views: "desc" }, { createdAt: "desc" }];
-    case "featured":
-      return [{ featured: "desc" }, { views: "desc" }, { createdAt: "desc" }];
-    default:
-      return [{ createdAt: "desc" }];
-  }
-}
-
 export async function getDirectoryTools(
   filters: ToolDirectoryFilters,
 ): Promise<DirectoryToolListResult> {
-  const where = buildWhere(filters);
+  const where = buildToolDirectoryWhere(filters);
   const skip = (filters.page - 1) * filters.pageSize;
-  const orderBy = buildOrderBy(filters.sort);
+  const orderBy = buildToolDirectoryOrderBy(filters.sort);
 
   const [tools, total] = await Promise.all([
     prisma.tool.findMany({

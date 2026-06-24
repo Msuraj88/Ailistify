@@ -7,6 +7,7 @@ import { ToolsGrid } from "@/components/directory/tools-grid";
 import { createPageMetadata } from "@/lib/metadata";
 import { getDirectoryCategoryBySlug } from "@/services/directory/categories";
 import { getDirectoryTools } from "@/services/directory/tools";
+import { parseSearchParams } from "@/lib/directory/url-state";
 import { toolDirectoryFiltersSchema } from "@/validations/directory";
 
 type CategoryDetailPageProps = {
@@ -47,15 +48,8 @@ export default async function CategoryDetailPage({
   }
 
   const rawParams = await searchParams;
-  const normalizedParams = Object.fromEntries(
-    Object.entries(rawParams).map(([key, value]) => [
-      key,
-      Array.isArray(value) ? value[0] : value,
-    ]),
-  );
-
   const filters = toolDirectoryFiltersSchema.parse({
-    ...normalizedParams,
+    ...parseSearchParams(rawParams),
     category: slug,
   });
 

@@ -7,6 +7,7 @@ import { ToolsGrid } from "@/components/directory/tools-grid";
 import { createPageMetadata } from "@/lib/metadata";
 import { getDirectoryTagBySlug } from "@/services/directory/tags";
 import { getDirectoryTools } from "@/services/directory/tools";
+import { parseSearchParams } from "@/lib/directory/url-state";
 import { toolDirectoryFiltersSchema } from "@/validations/directory";
 
 type TagDetailPageProps = {
@@ -50,15 +51,8 @@ export default async function TagDetailPage({
   }
 
   const rawParams = await searchParams;
-  const normalizedParams = Object.fromEntries(
-    Object.entries(rawParams).map(([key, value]) => [
-      key,
-      Array.isArray(value) ? value[0] : value,
-    ]),
-  );
-
   const filters = toolDirectoryFiltersSchema.parse({
-    ...normalizedParams,
+    ...parseSearchParams(rawParams),
     tag: slug,
   });
 
