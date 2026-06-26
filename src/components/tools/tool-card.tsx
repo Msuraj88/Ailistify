@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, BadgeCheck, Star } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, Megaphone, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { buildImageKitUrl } from "@/lib/imagekit/client";
+import { cn } from "@/lib/utils";
 import type { DirectoryToolCard } from "@/types/directory";
 
 type ToolCardProps = {
@@ -41,7 +42,13 @@ function ToolLogo({ logo, name }: { logo: string | null; name: string }) {
 
 export function ToolCard({ tool }: ToolCardProps) {
   return (
-    <Card className="group relative flex h-full flex-col transition-shadow hover:shadow-md">
+    <Card
+      className={cn(
+        "group relative flex h-full flex-col transition-shadow hover:shadow-md",
+        tool.sponsored &&
+          "border-amber-500/40 bg-gradient-to-br from-amber-500/5 to-transparent shadow-sm ring-1 ring-amber-500/20",
+      )}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-start gap-3">
           <ToolLogo logo={tool.logo} name={tool.name} />
@@ -61,6 +68,12 @@ export function ToolCard({ tool }: ToolCardProps) {
               />
             </div>
             <div className="mt-2 flex flex-wrap gap-1.5">
+              {tool.sponsored && (
+                <Badge className="gap-1 bg-amber-500 text-xs text-amber-950 hover:bg-amber-500">
+                  <Megaphone className="h-3 w-3" aria-hidden="true" />
+                  Sponsored
+                </Badge>
+              )}
               <Badge variant="secondary" className="text-xs">
                 {tool.category.name}
               </Badge>

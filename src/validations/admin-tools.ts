@@ -54,6 +54,9 @@ export const toolFormSchema = z.object({
   tagIds: z.array(z.string()).default([]),
   pricingModel: z.enum(PRICING_MODELS),
   featured: z.boolean(),
+  featuredUntil: z.string().optional().or(z.literal("")),
+  sponsored: z.boolean(),
+  sponsoredUntil: z.string().optional().or(z.literal("")),
   verified: z.boolean(),
   status: z.enum(TOOL_STATUSES),
   metaTitle: z

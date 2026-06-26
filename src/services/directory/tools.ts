@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { expireStaleMonetizationListings } from "@/lib/monetization/listings";
 import type {
   DirectoryToolDetail,
   DirectoryToolListResult,
@@ -18,6 +19,8 @@ import {
 export async function getDirectoryTools(
   filters: ToolDirectoryFilters,
 ): Promise<DirectoryToolListResult> {
+  await expireStaleMonetizationListings();
+
   const where = buildToolDirectoryWhere(filters);
   const skip = (filters.page - 1) * filters.pageSize;
   const orderBy = buildToolDirectoryOrderBy(filters.sort);
@@ -137,6 +140,8 @@ export async function getRelatedTools(
 export async function getFeaturedDirectoryTools(
   limit = 6,
 ): Promise<DirectoryToolCard[]> {
+  await expireStaleMonetizationListings();
+
   const tools = await prisma.tool.findMany({
     where: { ...PUBLISHED_TOOL_WHERE, featured: true },
     take: limit,

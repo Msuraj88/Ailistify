@@ -8,8 +8,12 @@ export type AdminToolListItem = {
   pricingModel: PricingModel;
   status: ToolStatus;
   featured: boolean;
+  featuredUntil: Date | null;
+  sponsored: boolean;
+  sponsoredUntil: Date | null;
   verified: boolean;
   views: number;
+  clicks: number;
   createdAt: Date;
   category: { id: string; name: string };
 };
@@ -50,6 +54,9 @@ export type AdminToolDetail = {
   images: AdminToolImage[];
   pricingModel: PricingModel;
   featured: boolean;
+  featuredUntil: Date | null;
+  sponsored: boolean;
+  sponsoredUntil: Date | null;
   verified: boolean;
   status: ToolStatus;
   metaTitle: string | null;

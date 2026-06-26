@@ -6,6 +6,10 @@ import { auth } from "@/lib/auth";
 import { hasRole } from "@/lib/auth/roles";
 import { isImageKitConfigured } from "@/lib/imagekit/config";
 import { isImageKitUrl } from "@/lib/imagekit/server";
+import {
+  resolveFeaturedListingInput,
+  resolveSponsoredListingInput,
+} from "@/lib/monetization/listings";
 import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/types";
 import {
@@ -90,6 +94,24 @@ function validateImageKitMedia(data: ToolFormData): string | null {
   return null;
 }
 
+function buildMonetizationFields(data: ToolFormData) {
+  const featured = resolveFeaturedListingInput({
+    featured: data.featured,
+    featuredUntil: data.featuredUntil,
+  });
+  const sponsored = resolveSponsoredListingInput({
+    sponsored: data.sponsored,
+    sponsoredUntil: data.sponsoredUntil,
+  });
+
+  return {
+    featured: featured.featured,
+    featuredUntil: featured.featuredUntil,
+    sponsored: sponsored.sponsored,
+    sponsoredUntil: sponsored.sponsoredUntil,
+  };
+}
+
 function buildToolImageRecords(toolId: string, data: ToolFormData) {
   return data.images.map((image, index) => ({
     toolId,
@@ -166,6 +188,8 @@ export async function createAdminTool(
     }
 
     const tool = await prisma.$transaction(async (tx) => {
+      const monetization = buildMonetizationFields(data);
+
       const created = await tx.tool.create({
         data: {
           name: data.name,
@@ -177,7 +201,10 @@ export async function createAdminTool(
           fullDescription: data.fullDescription,
           categoryId: data.categoryId,
           pricingModel: data.pricingModel,
-          featured: data.featured,
+          featured: monetization.featured,
+          featuredUntil: monetization.featuredUntil,
+          sponsored: monetization.sponsored,
+          sponsoredUntil: monetization.sponsoredUntil,
           verified: data.verified,
           status: data.status,
           metaTitle: normalizeOptionalText(data.metaTitle),
@@ -267,6 +294,8 @@ export async function updateAdminTool(
     }
 
     await prisma.$transaction(async (tx) => {
+      const monetization = buildMonetizationFields(data);
+
       await tx.tool.update({
         where: { id },
         data: {
@@ -279,7 +308,10 @@ export async function updateAdminTool(
           fullDescription: data.fullDescription,
           categoryId: data.categoryId,
           pricingModel: data.pricingModel,
-          featured: data.featured,
+          featured: monetization.featured,
+          featuredUntil: monetization.featuredUntil,
+          sponsored: monetization.sponsored,
+          sponsoredUntil: monetization.sponsoredUntil,
           verified: data.verified,
           status: data.status,
           metaTitle: normalizeOptionalText(data.metaTitle),

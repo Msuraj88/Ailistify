@@ -1,5 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { ToolStatus } from "@/generated/prisma/client";
+import { expireStaleMonetizationListings } from "@/lib/monetization/listings";
 import { prisma } from "@/lib/prisma";
 import type { DirectoryToolCard } from "@/types/directory";
 
@@ -15,6 +16,7 @@ export const toolCardSelect = {
   shortDescription: true,
   pricingModel: true,
   featured: true,
+  sponsored: true,
   verified: true,
   views: true,
   category: { select: { name: true, slug: true } },
@@ -37,6 +39,7 @@ export function mapToolCard(
     pricingModel: tool.pricingModel,
     featured: tool.featured,
     verified: tool.verified,
+    sponsored: tool.sponsored,
     views: tool.views,
     category: tool.category,
     tags: tool.tags.map((entry) => entry.tag),
@@ -44,5 +47,6 @@ export function mapToolCard(
 }
 
 export async function getPublishedToolCount(): Promise<number> {
+  await expireStaleMonetizationListings();
   return prisma.tool.count({ where: PUBLISHED_TOOL_WHERE });
 }

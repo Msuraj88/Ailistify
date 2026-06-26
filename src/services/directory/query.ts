@@ -47,7 +47,10 @@ export function buildToolDirectoryWhere(
   }
 
   if (filters.featured === true) {
-    and.push({ featured: true });
+    and.push({
+      featured: true,
+      OR: [{ featuredUntil: null }, { featuredUntil: { gt: new Date() } }],
+    });
   }
 
   if (filters.verified === true) {
@@ -68,6 +71,10 @@ export function buildToolDirectoryOrderBy(
     case "name":
       return [{ name: "asc" }];
     default:
-      return [{ createdAt: "desc" }];
+      return [
+        { sponsored: "desc" },
+        { featured: "desc" },
+        { createdAt: "desc" },
+      ];
   }
 }

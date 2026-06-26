@@ -11,8 +11,15 @@ export const metadata = createMetadata({
 });
 
 export default async function AdminDashboardPage() {
-  const { stats, recentTools, latestUsers, topViewedTools } =
-    await getDashboardData();
+  const {
+    stats,
+    recentTools,
+    latestUsers,
+    topViewedTools,
+    topClickedTools,
+    featuredPerformance,
+    monetizationStats,
+  } = await getDashboardData();
 
   return (
     <div className="space-y-8">
@@ -21,16 +28,18 @@ export default async function AdminDashboardPage() {
           Dashboard
         </h1>
         <p className="mt-1 text-muted-foreground">
-          Overview of your AI tools directory
+          Overview of your AI tools directory and monetization performance
         </p>
       </div>
 
-      <DashboardStatsGrid stats={stats} />
+      <DashboardStatsGrid stats={stats} monetizationStats={monetizationStats} />
 
       <DashboardWidgets
         recentTools={recentTools}
         latestUsers={latestUsers}
         topViewedTools={topViewedTools}
+        topClickedTools={topClickedTools}
+        featuredPerformance={featuredPerformance}
       />
     </div>
   );

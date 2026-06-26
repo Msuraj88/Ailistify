@@ -9,6 +9,7 @@ export type DirectoryToolCard = {
   pricingModel: PricingModel;
   featured: boolean;
   verified: boolean;
+  sponsored: boolean;
   views: number;
   category: { name: string; slug: string };
   tags: { name: string; slug: string }[];

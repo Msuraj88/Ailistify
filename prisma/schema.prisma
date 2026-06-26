@@ -139,6 +139,8 @@ model Tool {
   metaDescription  String?      @db.VarChar(160)
   featured         Boolean      @default(false)
   featuredUntil    DateTime?
+  sponsored        Boolean      @default(false)
+  sponsoredUntil   DateTime?
   verified         Boolean      @default(false)
   status           ToolStatus   @default(DRAFT)
   views            Int          @default(0)
@@ -163,6 +165,8 @@ model Tool {
   @@index([status])
   @@index([featured])
   @@index([featuredUntil])
+  @@index([sponsored])
+  @@index([sponsoredUntil])
   @@index([verified])
   @@index([submittedById])
   @@index([status, featured])

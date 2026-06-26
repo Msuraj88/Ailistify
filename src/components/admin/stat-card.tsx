@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 type StatCardProps = {
   title: string;
-  value: number;
+  value: number | string;
   icon: LucideIcon;
   description?: string;
   className?: string;
@@ -24,7 +24,9 @@ export function StatCard({
         <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value.toLocaleString()}</div>
+        <div className="text-2xl font-bold">
+          {typeof value === "number" ? value.toLocaleString() : value}
+        </div>
         {description && (
           <p className="text-xs text-muted-foreground">{description}</p>
         )}

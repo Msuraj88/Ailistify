@@ -1,4 +1,5 @@
 import type { Prisma } from "@/generated/prisma/client";
+import { expireStaleMonetizationListings } from "@/lib/monetization/expire";
 import { prisma } from "@/lib/prisma";
 import type {
   AdminToolDetail,
@@ -41,6 +42,8 @@ function buildWhere(filters: ToolListFilters): Prisma.ToolWhereInput {
 export async function getAdminTools(
   filters: ToolListFilters,
 ): Promise<AdminToolListResult> {
+  await expireStaleMonetizationListings();
+
   const where = buildWhere(filters);
   const skip = (filters.page - 1) * filters.pageSize;
   const orderBy =
@@ -62,8 +65,12 @@ export async function getAdminTools(
         pricingModel: true,
         status: true,
         featured: true,
+        featuredUntil: true,
+        sponsored: true,
+        sponsoredUntil: true,
         verified: true,
         views: true,
+        clicks: true,
         createdAt: true,
         category: { select: { id: true, name: true } },
       },
@@ -112,6 +119,9 @@ export async function getAdminToolById(
       categoryId: true,
       pricingModel: true,
       featured: true,
+      featuredUntil: true,
+      sponsored: true,
+      sponsoredUntil: true,
       verified: true,
       status: true,
       metaTitle: true,
@@ -149,6 +159,9 @@ export async function getAdminToolById(
     images: tool.images,
     pricingModel: tool.pricingModel,
     featured: tool.featured,
+    featuredUntil: tool.featuredUntil,
+    sponsored: tool.sponsored,
+    sponsoredUntil: tool.sponsoredUntil,
     verified: tool.verified,
     status: tool.status,
     metaTitle: tool.metaTitle,

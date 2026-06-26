@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { PRICING_MODELS, TOOL_STATUSES } from "@/lib/constants/tools";
+import { toDatetimeLocalValue } from "@/lib/monetization/dates";
 import { slugify } from "@/lib/utils";
 import type {
   AdminToolDetail,
@@ -48,6 +49,9 @@ const defaultValues: ToolFormInput = {
   tagIds: [],
   pricingModel: "FREE",
   featured: false,
+  featuredUntil: "",
+  sponsored: false,
+  sponsoredUntil: "",
   verified: false,
   status: "DRAFT",
   metaTitle: "",
@@ -74,6 +78,9 @@ function mapToolToFormValues(tool: AdminToolDetail): ToolFormInput {
     tagIds: tool.tagIds,
     pricingModel: tool.pricingModel,
     featured: tool.featured,
+    featuredUntil: toDatetimeLocalValue(tool.featuredUntil),
+    sponsored: tool.sponsored,
+    sponsoredUntil: toDatetimeLocalValue(tool.sponsoredUntil),
     verified: tool.verified,
     status: tool.status,
     metaTitle: tool.metaTitle ?? "",
@@ -417,7 +424,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label>Status</Label>
             <Controller
@@ -451,23 +458,6 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
 
           <div className="flex items-end">
             <Controller
-              name="featured"
-              control={control}
-              render={({ field }) => (
-                <label className="flex cursor-pointer items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={field.value}
-                    disabled={isSubmitting}
-                    onCheckedChange={(value) => field.onChange(value === true)}
-                  />
-                  <span>Featured tool</span>
-                </label>
-              )}
-            />
-          </div>
-
-          <div className="flex items-end">
-            <Controller
               name="verified"
               control={control}
               render={({ field }) => (
@@ -481,6 +471,76 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
                 </label>
               )}
             />
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-4 rounded-lg border bg-card p-6">
+        <div>
+          <h2 className="text-lg font-semibold">Monetization</h2>
+          <p className="text-sm text-muted-foreground">
+            Featured and sponsored placements with optional expiry dates.
+          </p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-4 rounded-md border p-4">
+            <Controller
+              name="featured"
+              control={control}
+              render={({ field }) => (
+                <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+                  <Checkbox
+                    checked={field.value}
+                    disabled={isSubmitting}
+                    onCheckedChange={(value) => field.onChange(value === true)}
+                  />
+                  <span>Featured listing</span>
+                </label>
+              )}
+            />
+            <div className="space-y-2">
+              <Label htmlFor="featuredUntil">Featured until</Label>
+              <Input
+                id="featuredUntil"
+                type="datetime-local"
+                disabled={isSubmitting || !watch("featured")}
+                {...register("featuredUntil")}
+              />
+              <p className="text-xs text-muted-foreground">
+                Leave empty for no expiry. Expired featured tools are
+                unpublished automatically.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4 rounded-md border p-4">
+            <Controller
+              name="sponsored"
+              control={control}
+              render={({ field }) => (
+                <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+                  <Checkbox
+                    checked={field.value}
+                    disabled={isSubmitting}
+                    onCheckedChange={(value) => field.onChange(value === true)}
+                  />
+                  <span>Sponsored listing</span>
+                </label>
+              )}
+            />
+            <div className="space-y-2">
+              <Label htmlFor="sponsoredUntil">Sponsored until</Label>
+              <Input
+                id="sponsoredUntil"
+                type="datetime-local"
+                disabled={isSubmitting || !watch("sponsored")}
+                {...register("sponsoredUntil")}
+              />
+              <p className="text-xs text-muted-foreground">
+                Sponsored tools are highlighted and sorted first in listings.
+              </p>
+            </div>
           </div>
         </div>
       </section>

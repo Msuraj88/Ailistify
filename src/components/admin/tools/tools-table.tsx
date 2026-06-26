@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/table";
 import type { ActionResult } from "@/types";
 import type { AdminToolListItem } from "@/types/admin-tools";
+import { formatCtr } from "@/lib/monetization/analytics";
 
 type ToolsTableProps = {
   tools: AdminToolListItem[];
@@ -227,9 +228,11 @@ export function ToolsTable({ tools }: ToolsTableProps) {
             <TableHead>Category</TableHead>
             <TableHead>Pricing</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Featured</TableHead>
+            <TableHead>Listings</TableHead>
             <TableHead>Verified</TableHead>
             <TableHead className="text-right">Views</TableHead>
+            <TableHead className="text-right">Clicks</TableHead>
+            <TableHead className="text-right">CTR</TableHead>
             <TableHead>Created</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -254,11 +257,21 @@ export function ToolsTable({ tools }: ToolsTableProps) {
                 <ToolStatusBadge status={tool.status} />
               </TableCell>
               <TableCell>
-                {tool.featured ? (
-                  <Badge>Yes</Badge>
-                ) : (
-                  <span className="text-muted-foreground">No</span>
-                )}
+                <div className="flex flex-wrap gap-1">
+                  {tool.featured && (
+                    <Badge variant="secondary" className="text-xs">
+                      Featured
+                    </Badge>
+                  )}
+                  {tool.sponsored && (
+                    <Badge className="bg-amber-500 text-xs text-amber-950 hover:bg-amber-500">
+                      Sponsored
+                    </Badge>
+                  )}
+                  {!tool.featured && !tool.sponsored && (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
+                </div>
               </TableCell>
               <TableCell>
                 {tool.verified ? (
@@ -269,6 +282,12 @@ export function ToolsTable({ tools }: ToolsTableProps) {
               </TableCell>
               <TableCell className="text-right tabular-nums">
                 {tool.views.toLocaleString()}
+              </TableCell>
+              <TableCell className="text-right tabular-nums">
+                {tool.clicks.toLocaleString()}
+              </TableCell>
+              <TableCell className="text-right tabular-nums">
+                {formatCtr(tool.views, tool.clicks)}
               </TableCell>
               <TableCell className="whitespace-nowrap text-muted-foreground">
                 {formatDate(tool.createdAt)}
