@@ -85,19 +85,10 @@ export default async function CategoryDetailPage({
     <div className="container mx-auto space-y-8 px-4 py-10 sm:px-6 lg:px-8">
       <Breadcrumbs items={breadcrumbs} />
 
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          {category.name}
-          {filters.page > 1 ? ` — Page ${filters.page}` : ""}
-        </h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
-          {category.description}
-        </p>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {category.toolCount} tool{category.toolCount === 1 ? "" : "s"}{" "}
-          published
-        </p>
-      </div>
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+        {category.name}
+        {filters.page > 1 ? ` — Page ${filters.page}` : ""}
+      </h1>
 
       <Suspense fallback={<ToolsPageSkeleton />}>
         <ToolsGrid

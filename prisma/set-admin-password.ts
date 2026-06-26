@@ -3,23 +3,24 @@ import bcrypt from "bcryptjs";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import { PrismaClient, UserRole } from "../src/generated/prisma/client";
+import {
+  getPgPoolOptions,
+  normalizeDatabaseUrl,
+} from "../src/lib/db/connection";
 
 const ADMIN_EMAIL = "admin@ailistify.com";
 const password = process.argv[2] ?? process.env.ADMIN_PASSWORD ?? "Admin123!";
 
 async function main() {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = normalizeDatabaseUrl(
+    process.env.DATABASE_URL ?? "",
+  );
 
   if (!connectionString) {
     throw new Error("DATABASE_URL is not set.");
   }
 
-  const pool = new Pool({
-    connectionString,
-    ssl: connectionString.includes("neon.tech")
-      ? { rejectUnauthorized: false }
-      : undefined,
-  });
+  const pool = new Pool(getPgPoolOptions(connectionString));
 
   const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
   const hashedPassword = await bcrypt.hash(password, 12);

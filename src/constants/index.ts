@@ -1,8 +1,8 @@
 export const NAV_LINKS = [
-  { href: "/tools", label: "Browse Tools" },
-  { href: "/categories", label: "Categories" },
-  { href: "/submit-tool", label: "Submit Tool" },
-  { href: "/about", label: "About" },
+  { href: "/", label: "Home" },
+  { href: "/tools", label: "AI Tools" },
+  { href: "/bookmarks", label: "Saved" },
+  { href: "/contact", label: "Contact" },
 ] as const;
 
 export const FOOTER_LINKS = {

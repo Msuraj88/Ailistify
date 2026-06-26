@@ -15,27 +15,31 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Logo />
+      <div className="container mx-auto flex h-16 items-center gap-4 px-4 sm:gap-6 sm:px-6 lg:gap-8 lg:px-8">
+        <div className="flex shrink-0 items-center gap-6 lg:gap-8">
+          <Logo />
 
-        <GlobalSearch />
+          <nav
+            className="hidden items-center gap-5 md:flex"
+            aria-label="Main navigation"
+          >
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-sm font-medium text-foreground transition-colors hover:text-foreground/70"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
 
-        <nav
-          className="hidden items-center gap-6 md:flex"
-          aria-label="Main navigation"
-        >
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+        <div className="hidden min-w-0 flex-1 justify-center md:flex">
+          <GlobalSearch className="max-w-lg" />
+        </div>
 
-        <div className="flex items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-2">
           <ThemeToggle />
           <UserNav />
           <Button asChild size="sm" className="hidden sm:inline-flex">
@@ -64,18 +68,21 @@ export function Header() {
           className="border-t px-4 py-4 md:hidden"
           aria-label="Mobile navigation"
         >
-          <div className="flex flex-col gap-3">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ))}
-            <Button asChild size="sm" className="mt-2 w-full">
+          <div className="flex flex-col gap-4">
+            <GlobalSearch />
+            <div className="flex flex-col gap-3">
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm font-medium text-foreground transition-colors hover:text-foreground/70"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+            <Button asChild size="sm" className="w-full">
               <Link
                 href="/submit-tool"
                 onClick={() => setMobileMenuOpen(false)}

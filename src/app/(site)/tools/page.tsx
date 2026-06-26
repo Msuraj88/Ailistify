@@ -32,10 +32,12 @@ export async function generateMetadata({
     totalPages: result.totalPages,
   });
 
-  const title = `Browse AI Tools${pagination.titleSuffix}`;
+  const title = filters.q?.trim()
+    ? `Search results for "${filters.q.trim()}"${pagination.titleSuffix}`
+    : `Browse AI Tools${pagination.titleSuffix}`;
   const description = filters.q?.trim()
     ? `Search results for "${filters.q.trim()}" in the AIListify AI tools directory.`
-    : "Search and filter the AIListify directory of AI tools by category, tag, pricing, and popularity.";
+    : "Browse and filter the AIListify directory of AI tools by category, pricing, and popularity.";
 
   return createSeoMetadata({
     title,
@@ -69,22 +71,13 @@ export default async function ToolsPage({ searchParams }: ToolsPageProps) {
         ]}
       />
 
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          Browse AI Tools
-          {filters.page > 1 ? ` — Page ${filters.page}` : ""}
-        </h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
-          Discover, compare, and explore {result.total.toLocaleString()} AI
-          tools across categories and tags.
-        </p>
-      </div>
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+        Browse AI Tools
+        {filters.page > 1 ? ` — Page ${filters.page}` : ""}
+      </h1>
 
       <Suspense fallback={<ToolsPageSkeleton />}>
-        <ToolsFilters
-          categories={filterOptions.categories}
-          tags={filterOptions.tags}
-        />
+        <ToolsFilters categories={filterOptions.categories} />
       </Suspense>
 
       <ToolsGrid tools={result.tools} />

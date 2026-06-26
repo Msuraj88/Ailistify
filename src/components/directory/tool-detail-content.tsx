@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { BadgeCheck, Star } from "lucide-react";
+import { BookmarkButton } from "@/components/bookmarks/bookmark-button";
 import { ToolOutboundButton } from "@/components/directory/tool-outbound-button";
 import { ToolViewTracker } from "@/components/directory/tool-view-tracker";
 import { ToolsGrid } from "@/components/directory/tools-grid";
@@ -74,6 +75,11 @@ export function ToolDetailContent({
             </p>
 
             <div className="flex flex-wrap gap-3">
+              <BookmarkButton
+                toolId={tool.id}
+                toolName={tool.name}
+                variant="button"
+              />
               <ToolOutboundButton
                 slug={tool.slug}
                 href={tool.websiteUrl}

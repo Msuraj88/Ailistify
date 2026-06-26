@@ -56,12 +56,7 @@ export default async function TagsPage({ searchParams }: TagsPageProps) {
         ]}
       />
 
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Tags</h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
-          Discover AI tools by topic, use case, and capability.
-        </p>
-      </div>
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Tags</h1>
 
       <Suspense fallback={<DirectoryGridSkeleton />}>
         <DirectorySearchBar basePath="/tags" placeholder="Search tags..." />

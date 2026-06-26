@@ -1,6 +1,7 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import { PrismaClient } from "@/generated/prisma/client";
+import { getPgPoolOptions } from "@/lib/db/connection";
 import { getDatabaseUrl } from "@/lib/env";
 
 const globalForPrisma = globalThis as unknown as {
@@ -8,21 +9,20 @@ const globalForPrisma = globalThis as unknown as {
   pool: Pool | undefined;
 };
 
+function createPool(connectionString: string) {
+  const pool = new Pool(getPgPoolOptions(connectionString));
+
+  pool.on("error", (error) => {
+    console.error("[pg] Unexpected idle client error:", error.message);
+  });
+
+  return pool;
+}
+
 function createPrismaClient() {
   const connectionString = getDatabaseUrl();
-
-  const pool =
-    globalForPrisma.pool ??
-    new Pool({
-      connectionString,
-      ssl: connectionString.includes("neon.tech")
-        ? { rejectUnauthorized: false }
-        : undefined,
-    });
-
-  if (!globalForPrisma.pool) {
-    globalForPrisma.pool = pool;
-  }
+  const pool = createPool(connectionString);
+  globalForPrisma.pool = pool;
 
   const adapter = new PrismaPg(pool);
 
@@ -35,8 +35,25 @@ function createPrismaClient() {
   });
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+export async function resetPrismaClient() {
+  if (globalForPrisma.prisma) {
+    await globalForPrisma.prisma.$disconnect().catch(() => undefined);
+  }
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+  if (globalForPrisma.pool) {
+    await globalForPrisma.pool.end().catch(() => undefined);
+  }
+
+  globalForPrisma.prisma = undefined;
+  globalForPrisma.pool = undefined;
 }
+
+function getPrismaClient() {
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = createPrismaClient();
+  }
+
+  return globalForPrisma.prisma;
+}
+
+export const prisma = getPrismaClient();

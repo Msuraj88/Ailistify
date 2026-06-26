@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  Bookmark,
   FolderTree,
   Megaphone,
   MessageSquare,
@@ -33,7 +34,7 @@ export function DashboardStatsGrid({
 }: DashboardStatsGridProps) {
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         <StatCard title="Total Tools" value={stats.totalTools} icon={Wrench} />
         <StatCard
           title="Total Categories"
@@ -46,6 +47,11 @@ export function DashboardStatsGrid({
           title="Total Reviews"
           value={stats.totalReviews}
           icon={MessageSquare}
+        />
+        <StatCard
+          title="Total Bookmarks"
+          value={stats.totalBookmarks}
+          icon={Bookmark}
         />
       </div>
 

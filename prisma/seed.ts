@@ -10,22 +10,23 @@ import { categories } from "./seed/data/categories";
 import { tags } from "./seed/data/tags";
 import { tools } from "./seed/data/tools";
 import { logoUrl } from "./seed/helpers";
+import {
+  getPgPoolOptions,
+  normalizeDatabaseUrl,
+} from "../src/lib/db/connection";
 
 const ADMIN_EMAIL = "admin@ailistify.com";
 
 function createPrismaClient() {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = normalizeDatabaseUrl(
+    process.env.DATABASE_URL ?? "",
+  );
 
   if (!connectionString) {
     throw new Error("DATABASE_URL is not set. Check your .env file.");
   }
 
-  const pool = new Pool({
-    connectionString,
-    ssl: connectionString.includes("neon.tech")
-      ? { rejectUnauthorized: false }
-      : undefined,
-  });
+  const pool = new Pool(getPgPoolOptions(connectionString));
 
   return new PrismaClient({ adapter: new PrismaPg(pool) });
 }

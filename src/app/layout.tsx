@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
+import { AppToaster } from "@/components/shared/app-toaster";
 import { AuthSessionProvider } from "@/components/shared/session-provider";
 import { ThemeProvider } from "@/components/shared/theme-provider";
 import { auth } from "@/lib/auth";
 import { createMetadata } from "@/lib/metadata";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = createMetadata();
@@ -28,10 +24,10 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full`}
+      className={`${inter.variable} h-full`}
       suppressHydrationWarning
     >
-      <body className="min-h-full">
+      <body className="min-h-full" suppressHydrationWarning>
         <AuthSessionProvider session={session}>
           <ThemeProvider
             attribute="class"
@@ -40,6 +36,7 @@ export default async function RootLayout({
             disableTransitionOnChange
           >
             {children}
+            <AppToaster />
           </ThemeProvider>
         </AuthSessionProvider>
       </body>

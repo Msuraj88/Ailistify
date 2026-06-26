@@ -75,6 +75,4 @@ export type HomePageData = {
   featuredTools: DirectoryToolCard[];
   latestTools: DirectoryToolCard[];
   popularCategories: DirectoryCategoryCard[];
-  popularTags: DirectoryTagCard[];
-  popularSearches: { name: string; slug: string }[];
 };

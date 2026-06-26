@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, Search, X } from "lucide-react";
-import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
+import { Loader2, X } from "lucide-react";
 import { buildToolsDirectoryHref } from "@/lib/directory/url-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -20,35 +18,22 @@ import { PRICING_MODELS } from "@/lib/constants/tools";
 
 type ToolsFiltersProps = {
   categories: { name: string; slug: string; toolCount: number }[];
-  tags: { name: string; slug: string; toolCount: number }[];
   basePath?: string;
 };
 
 const ALL_VALUE = "all";
-const SEARCH_DEBOUNCE_MS = 400;
 
 export function ToolsFilters({
   categories,
-  tags,
   basePath = "/tools",
 }: ToolsFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  const currentQ = searchParams.get("q") ?? "";
   const currentCategory = searchParams.get("category") ?? ALL_VALUE;
-  const currentTag = searchParams.get("tag") ?? ALL_VALUE;
   const currentPricing = searchParams.get("pricing") ?? ALL_VALUE;
-  const currentFeatured = searchParams.get("featured") ?? ALL_VALUE;
-  const currentVerified = searchParams.get("verified") ?? ALL_VALUE;
   const currentSort = searchParams.get("sort") ?? "latest";
-
-  const [searchQuery, setSearchQuery] = useState(currentQ);
-
-  useEffect(() => {
-    setSearchQuery(currentQ);
-  }, [currentQ]);
 
   function pushHref(updates: Record<string, string | null>) {
     const params = new URLSearchParams(searchParams.toString());
@@ -86,20 +71,6 @@ export function ToolsFilters({
     });
   }
 
-  const debouncedSearch = useDebouncedCallback((query: string) => {
-    pushHref({ q: query.trim() || null });
-  }, SEARCH_DEBOUNCE_MS);
-
-  function handleSearchChange(value: string) {
-    setSearchQuery(value);
-    debouncedSearch(value);
-  }
-
-  function handleSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    pushHref({ q: searchQuery.trim() || null });
-  }
-
   function clearFilters() {
     startTransition(() => {
       router.push(basePath);
@@ -107,138 +78,58 @@ export function ToolsFilters({
   }
 
   const hasActiveFilters =
-    currentQ ||
     currentCategory !== ALL_VALUE ||
-    currentTag !== ALL_VALUE ||
     currentPricing !== ALL_VALUE ||
-    currentFeatured !== ALL_VALUE ||
-    currentVerified !== ALL_VALUE ||
     currentSort !== "latest";
 
   return (
     <div className="space-y-4 rounded-lg border bg-card p-4">
-      <form onSubmit={handleSearchSubmit} className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            name="q"
-            value={searchQuery}
-            onChange={(event) => handleSearchChange(event.target.value)}
-            placeholder="Search by name, description, or tags..."
-            className="pl-9"
-            disabled={isPending}
-            aria-label="Search tools"
-          />
-        </div>
-        <Button type="submit" disabled={isPending}>
-          {isPending ? (
-            <Loader2 className="animate-spin" aria-hidden="true" />
-          ) : (
-            "Search"
-          )}
-        </Button>
-      </form>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+          <div className="space-y-2 sm:w-52">
+            <Label>Category</Label>
+            <Select
+              value={currentCategory}
+              onValueChange={(value) => pushHref({ category: value })}
+              disabled={isPending}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_VALUE}>All categories</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category.slug} value={category.slug}>
+                    {category.name} ({category.toolCount})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <div className="space-y-2">
-          <Label>Category</Label>
-          <Select
-            value={currentCategory}
-            onValueChange={(value) => pushHref({ category: value })}
-            disabled={isPending}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="All categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_VALUE}>All categories</SelectItem>
-              {categories.map((category) => (
-                <SelectItem key={category.slug} value={category.slug}>
-                  {category.name} ({category.toolCount})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Tag</Label>
-          <Select
-            value={currentTag}
-            onValueChange={(value) => pushHref({ tag: value })}
-            disabled={isPending}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="All tags" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_VALUE}>All tags</SelectItem>
-              {tags.map((tag) => (
-                <SelectItem key={tag.slug} value={tag.slug}>
-                  {tag.name} ({tag.toolCount})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-2 sm:w-52">
+            <Label>Pricing</Label>
+            <Select
+              value={currentPricing}
+              onValueChange={(value) => pushHref({ pricing: value })}
+              disabled={isPending}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All pricing" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_VALUE}>All pricing</SelectItem>
+                {PRICING_MODELS.map((model) => (
+                  <SelectItem key={model} value={model}>
+                    {model}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <Label>Pricing</Label>
-          <Select
-            value={currentPricing}
-            onValueChange={(value) => pushHref({ pricing: value })}
-            disabled={isPending}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="All pricing" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_VALUE}>All pricing</SelectItem>
-              {PRICING_MODELS.map((model) => (
-                <SelectItem key={model} value={model}>
-                  {model}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Featured</Label>
-          <Select
-            value={currentFeatured}
-            onValueChange={(value) => pushHref({ featured: value })}
-            disabled={isPending}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="All tools" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_VALUE}>All tools</SelectItem>
-              <SelectItem value="true">Featured only</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Verified</Label>
-          <Select
-            value={currentVerified}
-            onValueChange={(value) => pushHref({ verified: value })}
-            disabled={isPending}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="All tools" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_VALUE}>All tools</SelectItem>
-              <SelectItem value="true">Verified only</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
+        <div className="space-y-2 sm:w-52 lg:ml-auto">
           <Label>Sort by</Label>
           <Select
             value={currentSort}
@@ -258,47 +149,49 @@ export function ToolsFilters({
         </div>
       </div>
 
-      {hasActiveFilters && (
+      {(hasActiveFilters || isPending) && (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap gap-2">
-            {currentQ && <Badge variant="secondary">Search: {currentQ}</Badge>}
-            {currentCategory !== ALL_VALUE && (
-              <Badge variant="secondary">
-                Category:{" "}
-                {categories.find((c) => c.slug === currentCategory)?.name ??
-                  currentCategory}
-              </Badge>
+          {hasActiveFilters ? (
+            <div className="flex flex-wrap gap-2">
+              {currentCategory !== ALL_VALUE && (
+                <Badge variant="secondary">
+                  Category:{" "}
+                  {categories.find((c) => c.slug === currentCategory)?.name ??
+                    currentCategory}
+                </Badge>
+              )}
+              {currentPricing !== ALL_VALUE && (
+                <Badge variant="secondary">Pricing: {currentPricing}</Badge>
+              )}
+              {currentSort !== "latest" && (
+                <Badge variant="outline">Sort: {currentSort}</Badge>
+              )}
+            </div>
+          ) : (
+            <div />
+          )}
+
+          <div className="flex items-center gap-2">
+            {isPending && (
+              <Loader2
+                className="h-4 w-4 animate-spin text-muted-foreground"
+                aria-hidden="true"
+              />
             )}
-            {currentTag !== ALL_VALUE && (
-              <Badge variant="secondary">
-                Tag:{" "}
-                {tags.find((t) => t.slug === currentTag)?.name ?? currentTag}
-              </Badge>
-            )}
-            {currentPricing !== ALL_VALUE && (
-              <Badge variant="secondary">Pricing: {currentPricing}</Badge>
-            )}
-            {currentFeatured === "true" && (
-              <Badge variant="secondary">Featured</Badge>
-            )}
-            {currentVerified === "true" && (
-              <Badge variant="secondary">Verified</Badge>
-            )}
-            {currentSort !== "latest" && (
-              <Badge variant="outline">Sort: {currentSort}</Badge>
+            {hasActiveFilters && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                disabled={isPending}
+                className="shrink-0"
+              >
+                <X className="mr-2 h-4 w-4" />
+                Clear all
+              </Button>
             )}
           </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={clearFilters}
-            disabled={isPending}
-            className="shrink-0"
-          >
-            <X className="mr-2 h-4 w-4" />
-            Clear all
-          </Button>
         </div>
       )}
     </div>

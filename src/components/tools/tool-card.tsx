@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, BadgeCheck, Megaphone, Star } from "lucide-react";
+import { BadgeCheck, Megaphone, Star } from "lucide-react";
+import { BookmarkButton } from "@/components/bookmarks/bookmark-button";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -44,29 +45,26 @@ export function ToolCard({ tool }: ToolCardProps) {
   return (
     <Card
       className={cn(
-        "group relative flex h-full flex-col transition-shadow hover:shadow-md",
+        "relative flex h-full flex-col transition-shadow hover:shadow-md",
         tool.sponsored &&
           "border-amber-500/40 bg-gradient-to-br from-amber-500/5 to-transparent shadow-sm ring-1 ring-amber-500/20",
       )}
     >
+      <div className="absolute right-2 top-2 z-20">
+        <BookmarkButton toolId={tool.id} toolName={tool.name} />
+      </div>
       <CardHeader className="pb-3">
         <div className="flex items-start gap-3">
           <ToolLogo logo={tool.logo} name={tool.name} />
           <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-2">
-              <CardTitle className="text-lg leading-tight">
-                <Link
-                  href={`/tools/${tool.slug}`}
-                  className="after:absolute after:inset-0 hover:text-primary"
-                >
-                  {tool.name}
-                </Link>
-              </CardTitle>
-              <ArrowUpRight
-                className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
-                aria-hidden="true"
-              />
-            </div>
+            <CardTitle className="text-lg leading-tight">
+              <Link
+                href={`/tools/${tool.slug}`}
+                className="after:absolute after:inset-0 hover:text-primary"
+              >
+                {tool.name}
+              </Link>
+            </CardTitle>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {tool.sponsored && (
                 <Badge className="gap-1 bg-amber-500 text-xs text-amber-950 hover:bg-amber-500">

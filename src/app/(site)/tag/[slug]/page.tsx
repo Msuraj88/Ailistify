@@ -91,20 +91,10 @@ export default async function TagDetailPage({
     <div className="container mx-auto space-y-8 px-4 py-10 sm:px-6 lg:px-8">
       <Breadcrumbs items={breadcrumbs} />
 
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          #{tag.name}
-          {filters.page > 1 ? ` — Page ${filters.page}` : ""}
-        </h1>
-        {tag.description && (
-          <p className="mt-2 max-w-2xl text-muted-foreground">
-            {tag.description}
-          </p>
-        )}
-        <p className="mt-2 text-sm text-muted-foreground">
-          {tag.toolCount} tool{tag.toolCount === 1 ? "" : "s"} tagged
-        </p>
-      </div>
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+        #{tag.name}
+        {filters.page > 1 ? ` — Page ${filters.page}` : ""}
+      </h1>
 
       <Suspense fallback={<ToolsPageSkeleton />}>
         <ToolsGrid

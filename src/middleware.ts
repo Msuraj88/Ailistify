@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { middlewareAuth } from "@/lib/auth.middleware";
 
 const authRoutes = ["/login", "/register"];
-const protectedRoutes = ["/admin"];
+const protectedRoutes = ["/admin", "/bookmarks"];
 
 export default middlewareAuth((req) => {
   const { nextUrl } = req;
@@ -48,5 +48,11 @@ export default middlewareAuth((req) => {
 });
 
 export const config = {
-  matcher: ["/admin/:path*", "/submit/:path*", "/login", "/register"],
+  matcher: [
+    "/admin/:path*",
+    "/bookmarks",
+    "/submit/:path*",
+    "/login",
+    "/register",
+  ],
 };

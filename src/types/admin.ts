@@ -6,6 +6,7 @@ export type DashboardStats = {
   totalTags: number;
   totalUsers: number;
   totalReviews: number;
+  totalBookmarks: number;
 };
 
 export type RecentTool = {

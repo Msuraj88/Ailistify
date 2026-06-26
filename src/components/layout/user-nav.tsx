@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
-import { Loader2, LogOut, Shield, User } from "lucide-react";
+import { Bookmark, Loader2, LogOut, Shield, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -70,6 +70,12 @@ export function UserNav() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/bookmarks" className="cursor-pointer">
+            <Bookmark className="mr-2 h-4 w-4" />
+            My bookmarks
+          </Link>
+        </DropdownMenuItem>
         {admin && (
           <DropdownMenuItem asChild>
             <Link href="/admin" className="cursor-pointer">

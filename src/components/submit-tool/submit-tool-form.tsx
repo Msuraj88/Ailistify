@@ -119,12 +119,7 @@ export function SubmitToolForm({ options, defaultEmail }: SubmitToolFormProps) {
       )}
 
       <section className="space-y-4 rounded-lg border bg-card p-6">
-        <div>
-          <h2 className="text-lg font-semibold">Tool details</h2>
-          <p className="text-sm text-muted-foreground">
-            Tell us about the AI tool you want to list.
-          </p>
-        </div>
+        <h2 className="text-lg font-semibold">Tool details</h2>
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
@@ -232,12 +227,7 @@ export function SubmitToolForm({ options, defaultEmail }: SubmitToolFormProps) {
       </section>
 
       <section className="space-y-4 rounded-lg border bg-card p-6">
-        <div>
-          <h2 className="text-lg font-semibold">Tags</h2>
-          <p className="text-sm text-muted-foreground">
-            Select tags that describe this tool.
-          </p>
-        </div>
+        <h2 className="text-lg font-semibold">Tags</h2>
 
         <Controller
           name="tagIds"

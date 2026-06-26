@@ -2,6 +2,7 @@ import { ToolStatus } from "@/generated/prisma/client";
 import { calculateCtr } from "@/lib/monetization/analytics";
 import { expireStaleMonetizationListings } from "@/lib/monetization/listings";
 import { prisma } from "@/lib/prisma";
+import { getTotalBookmarkCount } from "@/services/bookmarks";
 import type {
   DashboardData,
   DashboardStats,
@@ -33,14 +34,21 @@ function mapAnalyticsRow(tool: {
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
-  const [totalTools, totalCategories, totalTags, totalUsers, totalReviews] =
-    await Promise.all([
-      prisma.tool.count(),
-      prisma.category.count(),
-      prisma.tag.count(),
-      prisma.user.count(),
-      prisma.review.count(),
-    ]);
+  const [
+    totalTools,
+    totalCategories,
+    totalTags,
+    totalUsers,
+    totalReviews,
+    totalBookmarks,
+  ] = await Promise.all([
+    prisma.tool.count(),
+    prisma.category.count(),
+    prisma.tag.count(),
+    prisma.user.count(),
+    prisma.review.count(),
+    getTotalBookmarkCount(),
+  ]);
 
   return {
     totalTools,
@@ -48,6 +56,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     totalTags,
     totalUsers,
     totalReviews,
+    totalBookmarks,
   };
 }
 

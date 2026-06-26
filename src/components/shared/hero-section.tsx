@@ -1,23 +1,21 @@
 import Link from "next/link";
-import { ArrowRight, Search, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Sparkles } from "lucide-react";
+import type { DirectoryCategoryCard } from "@/types/directory";
 
 type HeroSectionProps = {
   totalTools: number;
-  popularSearches: { name: string; slug: string }[];
+  popularCategories: DirectoryCategoryCard[];
 };
 
-export function HeroSection({ totalTools, popularSearches }: HeroSectionProps) {
+export function HeroSection({
+  totalTools,
+  popularCategories,
+}: HeroSectionProps) {
   return (
-    <section className="relative overflow-hidden border-b">
-      <div
-        className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background"
-        aria-hidden="true"
-      />
-      <div className="container mx-auto px-4 py-16 sm:px-6 sm:py-24 lg:px-8 lg:py-32">
-        <div className="mx-auto max-w-3xl text-center">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-muted/50 px-4 py-1.5 text-sm">
+    <section>
+      <div className="container mx-auto px-4 py-10 sm:px-6 lg:px-8">
+        <div className="overflow-hidden rounded-2xl bg-[url('/hero-gradient.png')] bg-cover bg-center px-6 py-8 text-center dark:bg-none dark:bg-gradient-to-br dark:from-card dark:to-secondary/40 sm:px-10 sm:py-10">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border bg-background/70 px-4 py-1.5 text-sm backdrop-blur-sm">
             <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
             <span>
               Curated directory of {totalTools.toLocaleString()}+ AI tools
@@ -26,52 +24,23 @@ export function HeroSection({ totalTools, popularSearches }: HeroSectionProps) {
 
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
             Discover the Best{" "}
-            <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">
               AI Tools
             </span>
           </h1>
 
-          <p className="mt-6 text-lg text-muted-foreground sm:text-xl">
-            Find, compare, and explore cutting-edge AI software for
-            productivity, development, design, marketing, and more — all in one
-            place.
-          </p>
-
-          <form
-            action="/tools"
-            method="get"
-            className="mx-auto mt-10 flex max-w-lg flex-col gap-3 sm:flex-row"
-            role="search"
-          >
-            <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                aria-hidden="true"
-              />
-              <Input
-                type="search"
-                name="q"
-                placeholder="Search AI tools..."
-                className="pl-10"
-                aria-label="Search AI tools"
-              />
-            </div>
-            <Button type="submit" className="sm:w-auto">
-              Search
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </form>
-
-          {popularSearches.length > 0 && (
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
-              <span>Popular:</span>
-              {popularSearches.map((term) => (
+          {popularCategories.length > 0 && (
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+              {popularCategories.map((category) => (
                 <Link
-                  key={term.slug}
-                  href={`/tools/${term.slug}`}
-                  className="rounded-full border px-3 py-1 transition-colors hover:border-primary hover:text-foreground"
+                  key={category.slug}
+                  href={`/category/${category.slug}`}
+                  className="rounded-full border border-border/80 bg-background/80 px-3 py-1.5 text-sm backdrop-blur-sm transition-colors hover:border-foreground/20 hover:bg-background"
                 >
-                  {term.name}
+                  {category.name}{" "}
+                  <span className="text-muted-foreground">
+                    ({category.toolCount})
+                  </span>
                 </Link>
               ))}
             </div>
