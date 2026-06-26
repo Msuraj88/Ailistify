@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Inter } from "next/font/google";
 import { AppToaster } from "@/components/shared/app-toaster";
 import { AuthSessionProvider } from "@/components/shared/session-provider";
 import { ThemeProvider } from "@/components/shared/theme-provider";
 import { auth } from "@/lib/auth";
+import { extensionHydrationFixScript } from "@/lib/extension-hydration-fix";
 import { createMetadata } from "@/lib/metadata";
 import "./globals.css";
 
@@ -27,7 +29,18 @@ export default async function RootLayout({
       className={`${inter.variable} h-full`}
       suppressHydrationWarning
     >
-      <body className="min-h-full" suppressHydrationWarning>
+      <body
+        className="min-h-full"
+        suppressHydrationWarning
+        data-bwignore="true"
+        data-1p-ignore
+        data-lpignore="true"
+      >
+        <Script
+          id="extension-hydration-fix"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: extensionHydrationFixScript }}
+        />
         <AuthSessionProvider session={session}>
           <ThemeProvider
             attribute="class"

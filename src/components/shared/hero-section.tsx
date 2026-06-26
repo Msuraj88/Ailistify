@@ -29,6 +29,12 @@ export function HeroSection({
             </span>
           </h1>
 
+          <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
+            Browse {totalTools.toLocaleString()}+ curated AI tools for coding,
+            productivity, marketing, writing, and more. Compare features,
+            pricing, and reviews to find the right software for your workflow.
+          </p>
+
           {popularCategories.length > 0 && (
             <div className="mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
               {popularCategories.map((category) => (

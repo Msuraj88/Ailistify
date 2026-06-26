@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Bookmark, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -25,8 +25,13 @@ export function BookmarkButton({
   const { data: session } = useSession();
   const { isBookmarked, setBookmarked, promptLogin } = useBookmarks();
   const [isPending, setIsPending] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  const bookmarked = isBookmarked(toolId);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const bookmarked = mounted ? isBookmarked(toolId) : false;
   const label = bookmarked ? "Remove bookmark" : "Save bookmark";
 
   async function handleToggle(event: React.MouseEvent<HTMLButtonElement>) {
