@@ -7,6 +7,8 @@ import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import { AuthDivider } from "@/components/auth/auth-divider";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,16 +22,37 @@ import {
 } from "@/components/ui/card";
 import { loginSchema, type LoginInput } from "@/validations/auth";
 
-export function LoginForm() {
+const AUTH_ERROR_MESSAGES: Record<string, string> = {
+  CredentialsSignin: "Invalid email or password. Please try again.",
+  OAuthAccountNotLinked:
+    "This email is already registered with a password. Sign in with email and password instead.",
+  OAuthSignin: "Google sign-in failed. Please try again.",
+  Configuration:
+    "Google sign-in is not configured yet. Add your OAuth credentials to continue.",
+  AccessDenied: "Access denied. You do not have permission to sign in.",
+  Default: "Something went wrong during sign-in. Please try again.",
+};
+
+function getAuthErrorMessage(error: string | null): string | null {
+  if (!error) {
+    return null;
+  }
+
+  return AUTH_ERROR_MESSAGES[error] ?? AUTH_ERROR_MESSAGES.Default;
+}
+
+type LoginFormProps = {
+  googleAuthEnabled?: boolean;
+};
+
+export function LoginForm({ googleAuthEnabled = false }: LoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/";
   const urlError = searchParams.get("error");
 
   const [serverError, setServerError] = useState<string | null>(
-    urlError === "CredentialsSignin"
-      ? "Invalid email or password. Please try again."
-      : null,
+    getAuthErrorMessage(urlError),
   );
   const [success, setSuccess] = useState(false);
 
@@ -87,6 +110,13 @@ export function LoginForm() {
             >
               Login successful. Redirecting...
             </div>
+          )}
+
+          {googleAuthEnabled && (
+            <>
+              <GoogleSignInButton callbackUrl={callbackUrl} />
+              <AuthDivider />
+            </>
           )}
 
           <div className="space-y-2">

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { LoginForm } from "@/components/auth/login-form";
 import { createNoIndexMetadata } from "@/lib/metadata";
+import { isGoogleAuthEnabled } from "@/lib/auth/oauth";
 
 export const metadata = createNoIndexMetadata({
   title: "Sign In",
@@ -14,7 +15,7 @@ export default function LoginPage() {
       <Suspense
         fallback={<div className="text-muted-foreground">Loading...</div>}
       >
-        <LoginForm />
+        <LoginForm googleAuthEnabled={isGoogleAuthEnabled()} />
       </Suspense>
     </div>
   );

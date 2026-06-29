@@ -8,6 +8,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { registerUser } from "@/actions/auth";
+import { AuthDivider } from "@/components/auth/auth-divider";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +23,11 @@ import {
 } from "@/components/ui/card";
 import { registerSchema, type RegisterInput } from "@/validations/auth";
 
-export function RegisterForm() {
+type RegisterFormProps = {
+  googleAuthEnabled?: boolean;
+};
+
+export function RegisterForm({ googleAuthEnabled = false }: RegisterFormProps) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -93,6 +99,13 @@ export function RegisterForm() {
             >
               Account created successfully. Redirecting...
             </div>
+          )}
+
+          {googleAuthEnabled && (
+            <>
+              <GoogleSignInButton callbackUrl="/" label="Sign up with Google" />
+              <AuthDivider label="or sign up with email" />
+            </>
           )}
 
           <div className="space-y-2">
