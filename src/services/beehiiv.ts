@@ -176,7 +176,27 @@ export async function subscribeToBeehiivPublication(
       };
     }
 
-    logNewsletterFailure(email, { status: response.status, errorMessage });
+    if (
+      response.status === 400 &&
+      /invalid_pattern|publicationid/.test(errorMessage)
+    ) {
+      logNewsletterFailure(email, {
+        status: response.status,
+        errorMessage,
+        reason: "invalid_publication_id",
+      });
+      return {
+        success: false,
+        code: "configuration_error",
+        message: "Newsletter signup is temporarily unavailable.",
+      };
+    }
+
+    logNewsletterFailure(email, {
+      status: response.status,
+      errorMessage,
+      body,
+    });
     return {
       success: false,
       code: "api_error",
