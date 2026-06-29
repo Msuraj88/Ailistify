@@ -14,13 +14,10 @@ import {
   getPgPoolOptions,
   normalizeDatabaseUrl,
 } from "../src/lib/db/connection";
-
-const ADMIN_EMAIL = "admin@ailistify.com";
+import { ADMIN_EMAIL } from "../src/lib/auth/admin";
 
 function createPrismaClient() {
-  const connectionString = normalizeDatabaseUrl(
-    process.env.DATABASE_URL ?? "",
-  );
+  const connectionString = normalizeDatabaseUrl(process.env.DATABASE_URL ?? "");
 
   if (!connectionString) {
     throw new Error("DATABASE_URL is not set. Check your .env file.");
@@ -35,11 +32,11 @@ async function seedAdmin(prisma: PrismaClient) {
   const admin = await prisma.user.upsert({
     where: { email: ADMIN_EMAIL },
     update: {
-      name: "Admin",
+      name: "Suraj",
       role: UserRole.ADMIN,
     },
     create: {
-      name: "Admin",
+      name: "Suraj",
       email: ADMIN_EMAIL,
       role: UserRole.ADMIN,
       emailVerified: new Date(),

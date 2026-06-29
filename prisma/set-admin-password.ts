@@ -7,14 +7,18 @@ import {
   getPgPoolOptions,
   normalizeDatabaseUrl,
 } from "../src/lib/db/connection";
+import { ADMIN_EMAIL } from "../src/lib/auth/admin";
 
-const ADMIN_EMAIL = "admin@ailistify.com";
-const password = process.argv[2] ?? process.env.ADMIN_PASSWORD ?? "Admin123!";
+const password = process.argv[2] ?? process.env.ADMIN_PASSWORD;
 
 async function main() {
-  const connectionString = normalizeDatabaseUrl(
-    process.env.DATABASE_URL ?? "",
-  );
+  if (!password) {
+    throw new Error(
+      "Pass the admin password as an argument or set ADMIN_PASSWORD in the environment.",
+    );
+  }
+
+  const connectionString = normalizeDatabaseUrl(process.env.DATABASE_URL ?? "");
 
   if (!connectionString) {
     throw new Error("DATABASE_URL is not set.");
@@ -28,13 +32,13 @@ async function main() {
   const admin = await prisma.user.upsert({
     where: { email: ADMIN_EMAIL },
     update: {
-      name: "Admin",
+      name: "Suraj",
       role: UserRole.ADMIN,
       password: hashedPassword,
       emailVerified: new Date(),
     },
     create: {
-      name: "Admin",
+      name: "Suraj",
       email: ADMIN_EMAIL,
       role: UserRole.ADMIN,
       password: hashedPassword,
