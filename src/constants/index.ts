@@ -5,26 +5,11 @@ export const NAV_LINKS = [
   { href: "/contact", label: "Contact" },
 ] as const;
 
-export const FOOTER_LINKS = {
-  product: [
-    { href: "/tools", label: "All Tools" },
-    { href: "/categories", label: "Categories" },
-    { href: "/submit-tool", label: "Submit a Tool" },
-    { href: "/featured", label: "Featured" },
-  ],
-  company: [
-    { href: "/about", label: "About" },
-    { href: "/blog", label: "Blog" },
-    { href: "/contact", label: "Contact" },
-    { href: "/privacy", label: "Privacy Policy" },
-  ],
-  resources: [
-    { href: "/docs", label: "Documentation" },
-    { href: "/api", label: "API" },
-    { href: "/changelog", label: "Changelog" },
-    { href: "/support", label: "Support" },
-  ],
-} as const;
+export const FOOTER_LINKS = [
+  { href: "/tools", label: "All Tools" },
+  { href: "/categories", label: "Categories" },
+  { href: "/submit-tool", label: "Submit a Tool" },
+] as const;
 
 export const TOOL_CATEGORIES = [
   {

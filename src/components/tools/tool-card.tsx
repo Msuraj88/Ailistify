@@ -45,9 +45,8 @@ export function ToolCard({ tool }: ToolCardProps) {
   return (
     <Card
       className={cn(
-        "relative flex h-full flex-col transition-shadow hover:shadow-md",
-        tool.sponsored &&
-          "border-amber-500/40 bg-gradient-to-br from-amber-500/5 to-transparent shadow-sm ring-1 ring-amber-500/20",
+        "relative flex h-full flex-col border-none shadow-none",
+        tool.sponsored && "bg-gradient-to-br from-amber-500/5 to-transparent",
       )}
     >
       <div className="absolute right-2 top-2 z-20">

@@ -23,8 +23,8 @@ export const reviewSchema = z.object({
 
 export type ReviewInput = z.input<typeof reviewSchema>;
 
-export const newsletterSchema = z.object({
-  email: z.email("Please enter a valid email"),
-});
-
-export type NewsletterInput = z.input<typeof newsletterSchema>;
+export {
+  newsletterSchema,
+  type NewsletterData,
+  type NewsletterInput,
+} from "@/validations/newsletter";

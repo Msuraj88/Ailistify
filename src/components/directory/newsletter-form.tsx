@@ -1,17 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Mail } from "lucide-react";
-import { subscribeNewsletter } from "@/actions/directory";
+import { toast } from "sonner";
+import { subscribeToNewsletter } from "@/actions/newsletter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { newsletterSchema, type NewsletterInput } from "@/validations";
+import {
+  newsletterSchema,
+  type NewsletterInput,
+} from "@/validations/newsletter";
 
 export function NewsletterForm() {
-  const [serverError, setServerError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const isSubmittingRef = useRef(false);
 
   const {
     register,
@@ -24,35 +27,47 @@ export function NewsletterForm() {
   });
 
   async function onSubmit(data: NewsletterInput) {
-    setServerError(null);
-    setSuccessMessage(null);
-
-    const result = await subscribeNewsletter(data.email);
-
-    if (!result.success) {
-      setServerError(result.error);
+    if (isSubmittingRef.current) {
       return;
     }
 
-    setSuccessMessage("You're subscribed! Watch your inbox for updates.");
-    reset();
+    isSubmittingRef.current = true;
+
+    try {
+      const result = await subscribeToNewsletter(data);
+
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success("Successfully subscribed!");
+      reset();
+    } catch {
+      toast.error("Failed to subscribe. Please try again later.");
+    } finally {
+      isSubmittingRef.current = false;
+    }
   }
+
+  const pending = isSubmitting;
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
       className="mx-auto max-w-md space-y-3"
+      noValidate
     >
       <div className="flex flex-col gap-2 sm:flex-row">
         <Input
           type="email"
           placeholder="you@example.com"
           autoComplete="email"
-          disabled={isSubmitting}
+          disabled={pending}
           {...register("email")}
         />
-        <Button type="submit" disabled={isSubmitting} className="sm:shrink-0">
-          {isSubmitting ? (
+        <Button type="submit" disabled={pending} className="sm:shrink-0">
+          {pending ? (
             <Loader2 className="animate-spin" aria-hidden="true" />
           ) : (
             <>
@@ -64,16 +79,6 @@ export function NewsletterForm() {
       </div>
       {errors.email && (
         <p className="text-sm text-destructive">{errors.email.message}</p>
-      )}
-      {serverError && (
-        <p className="text-sm text-destructive" role="alert">
-          {serverError}
-        </p>
-      )}
-      {successMessage && (
-        <p className="text-sm text-primary" role="status">
-          {successMessage}
-        </p>
       )}
     </form>
   );
