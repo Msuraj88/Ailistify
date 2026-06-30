@@ -97,6 +97,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzeProgress, setAnalyzeProgress] = useState<string | null>(null);
+  const [formResetKey, setFormResetKey] = useState(0);
 
   const {
     register,
@@ -104,6 +105,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
     handleSubmit,
     watch,
     setValue,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<ToolFormInput>({
     resolver: zodResolver(toolFormSchema),
@@ -137,8 +139,9 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
     }
 
     if (mode === "create") {
-      setSuccessMessage("Tool created successfully. Redirecting...");
-      router.push(`/admin/tools/${result.data.id}/edit`);
+      reset(defaultValues);
+      setFormResetKey((current) => current + 1);
+      toast.success("Tool published successfully.");
       router.refresh();
       return;
     }
@@ -426,6 +429,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
               control={control}
               render={({ field }) => (
                 <ToolLogoUpload
+                  key={formResetKey}
                   value={field.value}
                   onChange={field.onChange}
                   disabled={formDisabled}
