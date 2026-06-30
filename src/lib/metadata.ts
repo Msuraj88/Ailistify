@@ -159,6 +159,11 @@ export function createMetadata(overrides?: Partial<Metadata>): Metadata {
     alternates: {
       canonical: absoluteUrl("/"),
     },
+    icons: {
+      icon: "/logo-icon.png",
+      shortcut: "/logo-icon.png",
+      apple: "/logo-icon.png",
+    },
     ...overrides,
   };
 }

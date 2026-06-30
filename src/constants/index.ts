@@ -2,7 +2,6 @@ export const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/tools", label: "AI Tools" },
   { href: "/bookmarks", label: "Saved" },
-  { href: "/contact", label: "Contact" },
 ] as const;
 
 export const FOOTER_LINKS = [

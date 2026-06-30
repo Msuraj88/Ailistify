@@ -1,5 +1,5 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
 import { siteConfig } from "@/lib/metadata";
 
 type LogoProps = {
@@ -14,9 +14,15 @@ export function Logo({ className, showText = true }: LogoProps) {
       className={`flex items-center gap-2 font-bold tracking-tight ${className ?? ""}`}
       aria-label={`${siteConfig.name} home`}
     >
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-        <Sparkles className="h-4 w-4" aria-hidden="true" />
-      </div>
+      <Image
+        src="/logo-icon.png"
+        alt=""
+        width={32}
+        height={32}
+        className="h-8 w-8"
+        priority
+        aria-hidden="true"
+      />
       {showText && (
         <span className="text-lg sm:text-xl">
           AI<span className="text-primary">Listify</span>
