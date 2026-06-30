@@ -6,6 +6,9 @@ export const PRICING_MODELS = [
   "CONTACT",
 ] as const;
 
+/** Options shown in the admin tool form pricing dropdown. */
+export const ADMIN_TOOL_PRICING_MODELS = ["FREE", "FREEMIUM", "PAID"] as const;
+
 export const TOOL_STATUSES = [
   "DRAFT",
   "PENDING",
