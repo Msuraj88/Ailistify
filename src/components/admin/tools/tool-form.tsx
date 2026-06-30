@@ -25,7 +25,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import {
   ADMIN_TOOL_PRICING_MODELS,
-  TOOL_STATUSES,
 } from "@/lib/constants/tools";
 import { toDatetimeLocalValue } from "@/lib/monetization/dates";
 import { slugify } from "@/lib/utils";
@@ -59,7 +58,7 @@ const defaultValues: ToolFormInput = {
   sponsored: false,
   sponsoredUntil: "",
   verified: false,
-  status: "DRAFT",
+  status: "PUBLISHED",
   metaTitle: "",
   metaDescription: "",
 };
@@ -126,10 +125,13 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
     setServerError(null);
     setSuccessMessage(null);
 
+    const payload =
+      mode === "create" ? { ...data, status: "PUBLISHED" as const } : data;
+
     const result =
       mode === "create"
-        ? await createAdminTool(data)
-        : await updateAdminTool(tool!.id, data);
+        ? await createAdminTool(payload)
+        : await updateAdminTool(tool!.id, payload);
 
     if (!result.success) {
       setServerError(result.error);
@@ -511,61 +513,26 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
 
       <section className="space-y-4 rounded-lg border bg-card p-6">
         <div>
-          <h2 className="text-lg font-semibold">Status & visibility</h2>
+          <h2 className="text-lg font-semibold">Visibility</h2>
           <p className="text-sm text-muted-foreground">
-            Publishing status and badges.
+            Badges shown on the public tool listing.
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label>Status</Label>
-            <Controller
-              name="status"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  disabled={formDisabled}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TOOL_STATUSES.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {status}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            {errors.status && (
-              <p className="text-sm text-destructive">
-                {errors.status.message}
-              </p>
-            )}
-          </div>
-
-          <div className="flex items-end">
-            <Controller
-              name="verified"
-              control={control}
-              render={({ field }) => (
-                <label className="flex cursor-pointer items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={field.value}
-                    disabled={formDisabled}
-                    onCheckedChange={(value) => field.onChange(value === true)}
-                  />
-                  <span>Verified tool</span>
-                </label>
-              )}
-            />
-          </div>
-        </div>
+        <Controller
+          name="verified"
+          control={control}
+          render={({ field }) => (
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <Checkbox
+                checked={field.value}
+                disabled={formDisabled}
+                onCheckedChange={(value) => field.onChange(value === true)}
+              />
+              <span>Verified tool</span>
+            </label>
+          )}
+        />
       </section>
 
       <section className="space-y-4 rounded-lg border bg-card p-6">

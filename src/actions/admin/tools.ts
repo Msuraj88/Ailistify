@@ -206,7 +206,7 @@ export async function createAdminTool(
           sponsored: monetization.sponsored,
           sponsoredUntil: monetization.sponsoredUntil,
           verified: data.verified,
-          status: data.status,
+          status: ToolStatus.PUBLISHED,
           metaTitle: normalizeOptionalText(data.metaTitle),
           metaDescription: normalizeOptionalText(data.metaDescription),
           submittedById: authResult.data.userId,
