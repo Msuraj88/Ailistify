@@ -23,9 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  ADMIN_TOOL_PRICING_MODELS,
-} from "@/lib/constants/tools";
+import { ADMIN_TOOL_PRICING_MODELS } from "@/lib/constants/tools";
 import { toDatetimeLocalValue } from "@/lib/monetization/dates";
 import { slugify } from "@/lib/utils";
 import type {
