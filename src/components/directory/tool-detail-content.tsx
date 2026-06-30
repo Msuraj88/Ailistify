@@ -47,87 +47,89 @@ export function ToolDetailContent({
       <ToolViewTracker slug={tool.slug} />
 
       <article className="space-y-10">
-        <header className="flex flex-col gap-6 sm:flex-row sm:items-start">
-          <ToolLogo logo={tool.logo} name={tool.name} />
-          <div className="flex-1 space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
-              {tool.featured && (
-                <Badge className="gap-1">
-                  <Star className="h-3 w-3" aria-hidden="true" />
-                  Featured
-                </Badge>
-              )}
-              {tool.verified && (
-                <Badge variant="outline" className="gap-1">
-                  <BadgeCheck className="h-3 w-3" aria-hidden="true" />
-                  Verified
-                </Badge>
-              )}
-              <Badge variant="secondary">{tool.pricingModel}</Badge>
-            </div>
+        <div className="space-y-10 rounded-2xl bg-white p-6 sm:p-8">
+          <header className="flex flex-col gap-6 sm:flex-row sm:items-start">
+            <ToolLogo logo={tool.logo} name={tool.name} />
+            <div className="flex-1 space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                {tool.featured && (
+                  <Badge className="gap-1">
+                    <Star className="h-3 w-3" aria-hidden="true" />
+                    Featured
+                  </Badge>
+                )}
+                {tool.verified && (
+                  <Badge variant="outline" className="gap-1">
+                    <BadgeCheck className="h-3 w-3" aria-hidden="true" />
+                    Verified
+                  </Badge>
+                )}
+                <Badge variant="secondary">{tool.pricingModel}</Badge>
+              </div>
 
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              {tool.name}
-            </h1>
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                {tool.name}
+              </h1>
 
-            <p className="text-lg text-muted-foreground">
-              {tool.shortDescription}
-            </p>
+              <p className="text-lg text-muted-foreground">
+                {tool.shortDescription}
+              </p>
 
-            <div className="flex flex-wrap gap-3">
-              <BookmarkButton
-                toolId={tool.id}
-                toolName={tool.name}
-                variant="button"
-              />
-              <ToolOutboundButton
-                slug={tool.slug}
-                href={tool.websiteUrl}
-                label="Visit Website"
-              />
-              {tool.pricingUrl && (
+              <div className="flex flex-wrap gap-3">
+                <BookmarkButton
+                  toolId={tool.id}
+                  toolName={tool.name}
+                  variant="button"
+                />
                 <ToolOutboundButton
                   slug={tool.slug}
-                  href={tool.pricingUrl}
-                  label="View Pricing"
-                  variant="outline"
+                  href={tool.websiteUrl}
+                  label="Visit Website"
                 />
+                {tool.pricingUrl && (
+                  <ToolOutboundButton
+                    slug={tool.slug}
+                    href={tool.pricingUrl}
+                    label="View Pricing"
+                    variant="outline"
+                  />
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                <span>Category:</span>
+                <Link
+                  href={`/category/${tool.category.slug}`}
+                  className="font-medium text-foreground hover:text-primary"
+                >
+                  {tool.category.name}
+                </Link>
+              </div>
+
+              {tool.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {tool.tags.map((tag) => (
+                    <Link key={tag.id} href={`/tag/${tag.slug}`}>
+                      <Badge variant="outline">{tag.name}</Badge>
+                    </Link>
+                  ))}
+                </div>
               )}
             </div>
+          </header>
 
-            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-              <span>Category:</span>
-              <Link
-                href={`/category/${tool.category.slug}`}
-                className="font-medium text-foreground hover:text-primary"
-              >
-                {tool.category.name}
-              </Link>
+          <section aria-labelledby="description-heading">
+            <h2
+              id="description-heading"
+              className="mb-4 text-xl font-semibold tracking-tight"
+            >
+              About {tool.name}
+            </h2>
+            <div className="max-w-none whitespace-pre-wrap leading-relaxed text-muted-foreground">
+              {tool.fullDescription}
             </div>
-
-            {tool.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {tool.tags.map((tag) => (
-                  <Link key={tag.id} href={`/tag/${tag.slug}`}>
-                    <Badge variant="outline">{tag.name}</Badge>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </header>
-
-        <section aria-labelledby="description-heading">
-          <h2
-            id="description-heading"
-            className="mb-4 text-xl font-semibold tracking-tight"
-          >
-            About {tool.name}
-          </h2>
-          <div className="max-w-none whitespace-pre-wrap leading-relaxed text-muted-foreground">
-            {tool.fullDescription}
-          </div>
-        </section>
+          </section>
+        </div>
 
         {tool.images.length > 0 && (
           <section aria-labelledby="screenshots-heading">

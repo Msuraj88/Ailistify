@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { analyzeToolFromUrl } from "@/actions/analyze-tool";
 import { createAdminTool, updateAdminTool } from "@/actions/admin/tools";
 import { ToolLogoUpload } from "@/components/admin/tools/tool-logo-upload";
 // import { ToolScreenshotsManager } from "@/components/admin/tools/tool-screenshots-manager";
@@ -32,6 +34,7 @@ import type {
   AdminToolFormOptions,
 } from "@/types/admin-tools";
 import { toolFormSchema, type ToolFormInput } from "@/validations/admin-tools";
+import { analyzeToolUrlSchema } from "@/validations/analyze-tool";
 
 type ToolFormProps = {
   mode: "create" | "edit";
@@ -95,6 +98,8 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analyzeProgress, setAnalyzeProgress] = useState<string | null>(null);
 
   const {
     register,
@@ -109,6 +114,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
   });
 
   const nameValue = watch("name");
+  const formDisabled = isSubmitting || isAnalyzing;
 
   useEffect(() => {
     if (mode === "create" && nameValue) {
@@ -139,6 +145,68 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
 
     setSuccessMessage("Tool updated successfully.");
     router.refresh();
+  }
+
+  async function handleAnalyze() {
+    const websiteUrl = watch("websiteUrl");
+    const parsed = analyzeToolUrlSchema.safeParse({ url: websiteUrl });
+
+    if (!parsed.success) {
+      toast.error(
+        parsed.error.issues[0]?.message ?? "Please enter a valid URL.",
+      );
+      return;
+    }
+
+    setServerError(null);
+    setIsAnalyzing(true);
+
+    const progressSteps = [
+      "Analyzing...",
+      "Reading homepage...",
+      "Generating content...",
+      "Finding logo...",
+    ];
+    let stepIndex = 0;
+    setAnalyzeProgress(progressSteps[0]);
+
+    const progressInterval = window.setInterval(() => {
+      stepIndex = (stepIndex + 1) % progressSteps.length;
+      setAnalyzeProgress(progressSteps[stepIndex]);
+    }, 2000);
+
+    try {
+      const result = await analyzeToolFromUrl({ url: parsed.data.url });
+
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+
+      const data = result.data;
+      setValue("websiteUrl", data.websiteUrl);
+      setValue("name", data.name);
+      setValue("slug", data.slug);
+      setValue("categoryId", data.categoryId);
+      setValue("pricingModel", data.pricingModel);
+      setValue("tagIds", data.tagIds);
+      setValue("shortDescription", data.shortDescription);
+      setValue("fullDescription", data.fullDescription);
+      setValue("metaTitle", data.metaTitle);
+      setValue("metaDescription", data.metaDescription);
+      setValue("logo", data.logo);
+      setValue("verified", data.verified);
+      setValue("featured", data.featured);
+
+      setAnalyzeProgress("Done.");
+      toast.success("Tool details generated. Review and edit before saving.");
+    } catch {
+      toast.error("Tool analysis failed. Please try again.");
+    } finally {
+      window.clearInterval(progressInterval);
+      setIsAnalyzing(false);
+      window.setTimeout(() => setAnalyzeProgress(null), 1500);
+    }
   }
 
   return (
@@ -172,13 +240,38 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="websiteUrl">Tool URL</Label>
-            <Input
-              id="websiteUrl"
-              type="url"
-              placeholder="https://example.com"
-              disabled={isSubmitting}
-              {...register("websiteUrl")}
-            />
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Input
+                id="websiteUrl"
+                type="url"
+                placeholder="https://example.com"
+                disabled={formDisabled}
+                className="flex-1"
+                {...register("websiteUrl")}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                className="sm:shrink-0"
+                disabled={formDisabled}
+                onClick={handleAnalyze}
+              >
+                {isAnalyzing ? (
+                  <Loader2
+                    className="h-4 w-4 animate-spin"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <span aria-hidden="true">✨</span>
+                )}
+                Analyze
+              </Button>
+            </div>
+            {analyzeProgress && (
+              <p className="text-sm text-muted-foreground" role="status">
+                {analyzeProgress}
+              </p>
+            )}
             {errors.websiteUrl && (
               <p className="text-sm text-destructive">
                 {errors.websiteUrl.message}
@@ -188,7 +281,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
 
           <div className="space-y-2">
             <Label htmlFor="name">Tool name</Label>
-            <Input id="name" disabled={isSubmitting} {...register("name")} />
+            <Input id="name" disabled={formDisabled} {...register("name")} />
             {errors.name && (
               <p className="text-sm text-destructive">{errors.name.message}</p>
             )}
@@ -206,7 +299,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
-                    disabled={isSubmitting}
+                    disabled={formDisabled}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select a category" />
@@ -237,7 +330,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
-                    disabled={isSubmitting}
+                    disabled={formDisabled}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select pricing model" />
@@ -265,7 +358,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
             <Textarea
               id="shortDescription"
               rows={3}
-              disabled={isSubmitting}
+              disabled={formDisabled}
               {...register("shortDescription")}
             />
             {errors.shortDescription && (
@@ -280,7 +373,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
             <Textarea
               id="fullDescription"
               rows={8}
-              disabled={isSubmitting}
+              disabled={formDisabled}
               {...register("fullDescription")}
             />
             {errors.fullDescription && (
@@ -307,7 +400,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
                       >
                         <Checkbox
                           checked={checked}
-                          disabled={isSubmitting}
+                          disabled={formDisabled}
                           onCheckedChange={(value) => {
                             const next = new Set(field.value ?? []);
                             if (value) {
@@ -335,7 +428,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
                 <ToolLogoUpload
                   value={field.value}
                   onChange={field.onChange}
-                  disabled={isSubmitting}
+                  disabled={formDisabled}
                 />
               )}
             />
@@ -362,7 +455,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
             <ToolScreenshotsManager
               value={field.value ?? []}
               onChange={field.onChange}
-              disabled={isSubmitting}
+              disabled={formDisabled}
             />
           )}
         />
@@ -389,7 +482,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
             <Label htmlFor="metaTitle">Meta title</Label>
             <Input
               id="metaTitle"
-              disabled={isSubmitting}
+              disabled={formDisabled}
               {...register("metaTitle")}
             />
             {errors.metaTitle && (
@@ -404,7 +497,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
             <Textarea
               id="metaDescription"
               rows={3}
-              disabled={isSubmitting}
+              disabled={formDisabled}
               {...register("metaDescription")}
             />
             {errors.metaDescription && (
@@ -434,7 +527,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
                 <Select
                   value={field.value}
                   onValueChange={field.onChange}
-                  disabled={isSubmitting}
+                  disabled={formDisabled}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
@@ -464,7 +557,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
                 <label className="flex cursor-pointer items-center gap-2 text-sm">
                   <Checkbox
                     checked={field.value}
-                    disabled={isSubmitting}
+                    disabled={formDisabled}
                     onCheckedChange={(value) => field.onChange(value === true)}
                   />
                   <span>Verified tool</span>
@@ -492,7 +585,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
                 <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
                   <Checkbox
                     checked={field.value}
-                    disabled={isSubmitting}
+                    disabled={formDisabled}
                     onCheckedChange={(value) => field.onChange(value === true)}
                   />
                   <span>Featured listing</span>
@@ -504,7 +597,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
               <Input
                 id="featuredUntil"
                 type="datetime-local"
-                disabled={isSubmitting || !watch("featured")}
+                disabled={formDisabled || !watch("featured")}
                 {...register("featuredUntil")}
               />
               <p className="text-xs text-muted-foreground">
@@ -522,7 +615,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
                 <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
                   <Checkbox
                     checked={field.value}
-                    disabled={isSubmitting}
+                    disabled={formDisabled}
                     onCheckedChange={(value) => field.onChange(value === true)}
                   />
                   <span>Sponsored listing</span>
@@ -534,7 +627,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
               <Input
                 id="sponsoredUntil"
                 type="datetime-local"
-                disabled={isSubmitting || !watch("sponsored")}
+                disabled={formDisabled || !watch("sponsored")}
                 {...register("sponsoredUntil")}
               />
               <p className="text-xs text-muted-foreground">
@@ -546,10 +639,10 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
       </section>
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button type="button" variant="outline" asChild disabled={isSubmitting}>
+        <Button type="button" variant="outline" asChild disabled={formDisabled}>
           <Link href="/admin/tools">Cancel</Link>
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={formDisabled}>
           {isSubmitting ? (
             <>
               <Loader2 className="animate-spin" aria-hidden="true" />
