@@ -11,7 +11,7 @@ export function Logo({ className, showText = true }: LogoProps) {
   return (
     <Link
       href="/"
-      className={`flex items-center gap-2 font-bold tracking-tight ${className ?? ""}`}
+      className={`flex cursor-pointer items-center gap-2 font-bold tracking-tight ${className ?? ""}`}
       aria-label={`${siteConfig.name} home`}
     >
       <Image

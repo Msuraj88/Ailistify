@@ -20,6 +20,7 @@ export default async function HomePage() {
       <JsonLd data={[buildOrganizationSchema(), buildWebSiteSchema()]} />
       <HeroSection
         totalTools={data.totalTools}
+        heroSponsoredTool={data.heroSponsoredTool}
         popularCategories={data.popularCategories}
       />
       <HomeSections data={data} />

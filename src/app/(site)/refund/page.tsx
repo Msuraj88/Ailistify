@@ -2,38 +2,38 @@ import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { PolicyContent } from "@/components/legal/policy-content";
 import {
-  privacyPolicyMeta,
-  privacyPolicySections,
-} from "@/content/privacy-policy";
+  refundPolicyMeta,
+  refundPolicySections,
+} from "@/content/refund-policy";
 import { createSeoMetadata } from "@/lib/metadata";
 
 export const metadata: Metadata = createSeoMetadata({
-  title: privacyPolicyMeta.title,
+  title: refundPolicyMeta.title,
   description:
-    "Read the AIListify Privacy Policy to learn how we collect, use, and protect your personal data.",
-  path: "/privacy",
+    "Read the AIListify Refund Policy for digital listing and promotional services.",
+  path: "/refund",
 });
 
-export default function PrivacyPolicyPage() {
+export default function RefundPolicyPage() {
   return (
     <div className="container mx-auto max-w-3xl space-y-8 px-4 py-10 sm:px-6 lg:px-8">
       <Breadcrumbs
         items={[
           { name: "Home", path: "/" },
-          { name: "Privacy Policy", path: "/privacy" },
+          { name: "Refund Policy", path: "/refund" },
         ]}
       />
 
       <div className="space-y-3">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          {privacyPolicyMeta.title}
+          {refundPolicyMeta.title}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Last updated: {privacyPolicyMeta.lastUpdated}
+          Last updated: {refundPolicyMeta.lastUpdated}
         </p>
       </div>
 
-      <PolicyContent sections={privacyPolicySections} />
+      <PolicyContent sections={refundPolicySections} />
     </div>
   );
 }

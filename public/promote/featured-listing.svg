@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" fill="none">
+  <rect width="1200" height="520" rx="24" fill="#F5F5F5"/>
+  <text x="80" y="72" fill="#111827" font-family="Arial, sans-serif" font-size="28" font-weight="700">Featured Tools</text>
+  <rect x="80" y="110" width="320" height="300" rx="20" fill="white" stroke="#F9A8D4" stroke-width="3"/>
+  <rect x="110" y="140" width="56" height="56" rx="12" fill="#E5E7EB"/>
+  <rect x="110" y="210" width="180" height="18" rx="9" fill="#111827"/>
+  <rect x="110" y="240" width="120" height="14" rx="7" fill="#FDE68A"/>
+  <text x="130" y="252" fill="#92400E" font-family="Arial, sans-serif" font-size="12" font-weight="700">Featured</text>
+  <rect x="110" y="270" width="250" height="12" rx="6" fill="#E5E7EB"/>
+  <rect x="110" y="290" width="220" height="12" rx="6" fill="#E5E7EB"/>
+  <rect x="110" y="310" width="200" height="12" rx="6" fill="#E5E7EB"/>
+  <rect x="430" y="110" width="320" height="300" rx="20" fill="white" stroke="#E5E7EB"/>
+  <rect x="780" y="110" width="320" height="300" rx="20" fill="white" stroke="#E5E7EB"/>
+</svg>

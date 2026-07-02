@@ -40,12 +40,29 @@ export function Footer() {
           <p className="text-sm text-muted-foreground">
             &copy; {currentYear} {siteConfig.name}. All rights reserved.
           </p>
-          <Link
-            href="/privacy"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+          <nav
+            aria-label="Legal"
+            className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2"
           >
-            Privacy Policy
-          </Link>
+            <Link
+              href="/privacy"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              href="/terms"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Terms & Conditions
+            </Link>
+            <Link
+              href="/refund"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Refund Policy
+            </Link>
+          </nav>
         </div>
       </div>
     </footer>

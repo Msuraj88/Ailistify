@@ -1,19 +1,6 @@
-export type PolicySection = {
-  id: string;
-  title: string;
-  content?: string[];
-  list?: string[];
-  subsections?: {
-    title: string;
-    content?: string[];
-    list?: string[];
-    subsections?: {
-      title: string;
-      content?: string[];
-      list?: string[];
-    }[];
-  }[];
-};
+import type { PolicySection } from "@/content/policy-types";
+
+export type { PolicySection } from "@/content/policy-types";
 
 export const privacyPolicyMeta = {
   title: "Privacy Policy",

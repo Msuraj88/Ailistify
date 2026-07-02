@@ -1,5 +1,12 @@
 import type { PricingModel } from "@/generated/prisma/client";
 
+export type HeroSponsoredTool = {
+  name: string;
+  slug: string;
+  logo: string | null;
+  websiteUrl: string;
+};
+
 export type DirectoryToolCard = {
   id: string;
   name: string;
@@ -72,6 +79,7 @@ export type DirectoryToolDetail = {
 
 export type HomePageData = {
   totalTools: number;
+  heroSponsoredTool: HeroSponsoredTool | null;
   featuredTools: DirectoryToolCard[];
   latestTools: DirectoryToolCard[];
   popularCategories: DirectoryCategoryCard[];

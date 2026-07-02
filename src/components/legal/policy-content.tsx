@@ -1,4 +1,4 @@
-import type { PolicySection } from "@/content/privacy-policy";
+import type { PolicySection } from "@/content/policy-types";
 
 type PolicyBlockProps = {
   section: PolicySection;
@@ -55,11 +55,11 @@ function PolicyBlock({ section, level = 2 }: PolicyBlockProps) {
   );
 }
 
-type PrivacyPolicyContentProps = {
+type PolicyContentProps = {
   sections: PolicySection[];
 };
 
-export function PrivacyPolicyContent({ sections }: PrivacyPolicyContentProps) {
+export function PolicyContent({ sections }: PolicyContentProps) {
   return (
     <div className="space-y-10">
       {sections.map((section) => (

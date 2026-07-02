@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" fill="none">
+  <rect width="1200" height="520" rx="24" fill="#F7E8DF"/>
+  <rect x="80" y="56" width="1040" height="408" rx="28" fill="#FCEFE8"/>
+  <rect x="430" y="92" width="340" height="42" rx="21" fill="white" stroke="#F9D7A5" stroke-width="2"/>
+  <text x="600" y="118" text-anchor="middle" fill="#9CA3AF" font-family="Arial, sans-serif" font-size="14">Sponsored by</text>
+  <rect x="470" y="150" width="260" height="48" rx="24" fill="white" stroke="#FBCFE8"/>
+  <rect x="488" y="164" width="24" height="24" rx="6" fill="#111827"/>
+  <text x="530" y="180" fill="#111827" font-family="Arial, sans-serif" font-size="18" font-weight="700">Your Tool</text>
+  <text x="600" y="250" text-anchor="middle" fill="#111827" font-family="Arial, sans-serif" font-size="42" font-weight="700">Discover the Best AI Tools</text>
+  <text x="600" y="292" text-anchor="middle" fill="#6B7280" font-family="Arial, sans-serif" font-size="18">Homepage sponsor chip preview</text>
+</svg>

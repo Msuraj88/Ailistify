@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" fill="none">
+  <rect width="1200" height="520" rx="24" fill="#F5F5F5"/>
+  <text x="80" y="72" fill="#111827" font-family="Arial, sans-serif" font-size="28" font-weight="700">AI Tools</text>
+  <rect x="80" y="110" width="1000" height="110" rx="20" fill="#FFFBEB" stroke="#F59E0B" stroke-width="2"/>
+  <rect x="110" y="140" width="56" height="56" rx="12" fill="#E5E7EB"/>
+  <rect x="180" y="145" width="180" height="18" rx="9" fill="#111827"/>
+  <rect x="180" y="172" width="120" height="14" rx="7" fill="#F59E0B"/>
+  <text x="200" y="184" fill="#78350F" font-family="Arial, sans-serif" font-size="12" font-weight="700">Sponsored</text>
+  <rect x="80" y="240" width="1000" height="110" rx="20" fill="white" stroke="#E5E7EB"/>
+  <rect x="80" y="370" width="1000" height="110" rx="20" fill="white" stroke="#E5E7EB"/>
+  <text x="980" y="170" fill="#6B7280" font-family="Arial, sans-serif" font-size="14">Sorted first</text>
+</svg>
