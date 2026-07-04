@@ -1,6 +1,7 @@
 "use server";
 
 import { requireAdminAction } from "@/lib/auth/require-admin-action";
+import { auth } from "@/lib/auth";
 import {
   analyzeToolFromWebsite,
   ToolAnalyzerError,
@@ -13,10 +14,25 @@ import { analyzeToolUrlSchema } from "@/validations/analyze-tool";
 export async function analyzeToolFromUrl(
   input: unknown,
 ): Promise<ActionResult<ToolAnalyzerFormFill>> {
-  const auth = await requireAdminAction();
+  const authResult = await requireAdminAction();
 
-  if (!auth.success) {
-    return auth;
+  if (!authResult.success) {
+    return authResult;
+  }
+
+  return analyzeToolForSubmission(input);
+}
+
+export async function analyzeToolForSubmission(
+  input: unknown,
+): Promise<ActionResult<ToolAnalyzerFormFill>> {
+  const session = await auth();
+
+  if (!session?.user) {
+    return {
+      success: false,
+      error: "You must be signed in to analyze a tool.",
+    };
   }
 
   const parsed = analyzeToolUrlSchema.safeParse(input);

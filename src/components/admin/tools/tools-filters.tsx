@@ -13,7 +13,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PRICING_MODELS, TOOL_STATUSES } from "@/lib/constants/tools";
+import {
+  PRICING_MODELS,
+  TOOL_STATUSES,
+  LISTING_PLANS,
+  PAYMENT_STATUSES,
+} from "@/lib/constants/tools";
 
 type ToolsFiltersProps = {
   categories: { id: string; name: string }[];
@@ -31,6 +36,8 @@ export function ToolsFilters({ categories }: ToolsFiltersProps) {
   const currentStatus = searchParams.get("status") ?? ALL_VALUE;
   const currentPricing = searchParams.get("pricingModel") ?? ALL_VALUE;
   const currentFeatured = searchParams.get("featured") ?? ALL_VALUE;
+  const currentListingPlan = searchParams.get("listingPlan") ?? ALL_VALUE;
+  const currentPaymentStatus = searchParams.get("paymentStatus") ?? ALL_VALUE;
   const currentSort = searchParams.get("sort") ?? "newest";
 
   function updateParams(updates: Record<string, string | null>) {
@@ -71,6 +78,8 @@ export function ToolsFilters({ categories }: ToolsFiltersProps) {
     currentStatus !== ALL_VALUE ||
     currentPricing !== ALL_VALUE ||
     currentFeatured !== ALL_VALUE ||
+    currentListingPlan !== ALL_VALUE ||
+    currentPaymentStatus !== ALL_VALUE ||
     currentSort !== "newest";
 
   return (
@@ -95,7 +104,7 @@ export function ToolsFilters({ categories }: ToolsFiltersProps) {
         </Button>
       </form>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <div className="space-y-2">
           <Label>Category</Label>
           <Select
@@ -173,6 +182,48 @@ export function ToolsFilters({ categories }: ToolsFiltersProps) {
               <SelectItem value={ALL_VALUE}>All tools</SelectItem>
               <SelectItem value="true">Featured only</SelectItem>
               <SelectItem value="false">Not featured</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Listing plan</Label>
+          <Select
+            value={currentListingPlan}
+            onValueChange={(value) => updateParams({ listingPlan: value })}
+            disabled={isPending}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All plans" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_VALUE}>All plans</SelectItem>
+              {LISTING_PLANS.map((plan) => (
+                <SelectItem key={plan} value={plan}>
+                  {plan}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Payment status</Label>
+          <Select
+            value={currentPaymentStatus}
+            onValueChange={(value) => updateParams({ paymentStatus: value })}
+            disabled={isPending}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All payments" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_VALUE}>All payments</SelectItem>
+              {PAYMENT_STATUSES.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

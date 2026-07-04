@@ -31,6 +31,19 @@ enum ToolStatus {
   ARCHIVED
 }
 
+enum ListingPlan {
+  FREE
+  PRIORITY
+  FEATURED
+}
+
+enum PaymentStatus {
+  NOT_REQUIRED
+  PENDING
+  PAID
+  CANCELLED
+}
+
 // ─── Auth.js models ──────────────────────────────────────────────────────────
 
 model User {
@@ -142,8 +155,12 @@ model Tool {
   sponsored        Boolean      @default(false)
   sponsoredUntil   DateTime?
   verified         Boolean      @default(false)
-  status           ToolStatus   @default(DRAFT)
-  views            Int          @default(0)
+  status           ToolStatus     @default(DRAFT)
+  listingPlan      ListingPlan    @default(FREE)
+  paymentStatus    PaymentStatus  @default(NOT_REQUIRED)
+  submissionId     String?        @unique
+  paypalOrderId    String?
+  views            Int            @default(0)
   clicks           Int          @default(0)
   categoryId       String
   submittedById    String?
@@ -163,6 +180,8 @@ model Tool {
   @@index([name])
   @@index([categoryId])
   @@index([status])
+  @@index([listingPlan])
+  @@index([paymentStatus])
   @@index([featured])
   @@index([featuredUntil])
   @@index([sponsored])

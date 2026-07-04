@@ -1,12 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { ToolStatus } from "@/generated/prisma/client";
+import {
+  ListingPlan,
+  PaymentStatus,
+  ToolStatus,
+} from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
 import { sendSubmissionReceivedEmail } from "@/lib/email/tool-submission";
 import { isImageKitConfigured } from "@/lib/imagekit/config";
 import { isImageKitUrl } from "@/lib/imagekit/server";
 import { prisma } from "@/lib/prisma";
+import { generateSubmissionId } from "@/lib/submission/id";
 import { slugify } from "@/lib/utils";
 import type { ActionResult } from "@/types";
 import {
@@ -14,7 +19,7 @@ import {
   type SubmitToolInput,
 } from "@/validations/submit-tool";
 
-const PUBLIC_PATHS = ["/tools", "/admin/tools", "/submit-tool"];
+const PUBLIC_PATHS = ["/tools", "/admin/tools", "/submit", "/submit-tool"];
 
 function revalidateSubmissionPaths() {
   for (const path of PUBLIC_PATHS) {
@@ -23,6 +28,11 @@ function revalidateSubmissionPaths() {
 }
 
 function normalizeOptionalUrl(value: string | undefined) {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+function normalizeOptionalText(value: string | undefined) {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
 }
@@ -52,9 +62,50 @@ async function resolveUniqueSlug(baseName: string) {
   return slug;
 }
 
-export async function submitTool(
-  input: SubmitToolInput,
-): Promise<ActionResult<{ slug: string }>> {
+function validateImageKitMedia(
+  logo: string | null,
+  images: { imageUrl: string }[],
+): string | null {
+  if (!isImageKitConfigured()) {
+    return null;
+  }
+
+  if (logo && !isImageKitUrl(logo)) {
+    return "Logo must be uploaded via the form uploader.";
+  }
+
+  for (const image of images) {
+    if (!isImageKitUrl(image.imageUrl)) {
+      return "All gallery images must be uploaded via the form uploader.";
+    }
+  }
+
+  return null;
+}
+
+function resolvePaymentStatus(listingPlan: ListingPlan): PaymentStatus {
+  if (listingPlan === ListingPlan.FREE) {
+    return PaymentStatus.NOT_REQUIRED;
+  }
+
+  return PaymentStatus.PENDING;
+}
+
+export async function submitTool(input: SubmitToolInput): Promise<
+  ActionResult<{
+    toolId: string;
+    submissionId: string;
+    slug: string;
+    listingPlan: ListingPlan;
+    paymentStatus: PaymentStatus;
+  }>
+> {
+  const session = await auth();
+
+  if (!session?.user) {
+    return { success: false, error: "You must be signed in to submit a tool." };
+  }
+
   const parsed = submitToolSchema.safeParse(input);
 
   if (!parsed.success) {
@@ -65,26 +116,20 @@ export async function submitTool(
   }
 
   const data = parsed.data;
-  const session = await auth();
   const submitterEmail = data.submitterEmail.toLowerCase();
-
   const normalizedLogo = normalizeOptionalUrl(data.logo);
-  if (
-    normalizedLogo &&
-    isImageKitConfigured() &&
-    !isImageKitUrl(normalizedLogo)
-  ) {
-    return {
-      success: false,
-      error: "Logo must be uploaded via the form uploader.",
-    };
+  const imageKitError = validateImageKitMedia(normalizedLogo, data.images);
+
+  if (imageKitError) {
+    return { success: false, error: imageKitError };
   }
 
   try {
-    const [category, tagsValid, slug] = await Promise.all([
+    const [category, tagsValid, slug, submissionId] = await Promise.all([
       prisma.category.findUnique({ where: { id: data.categoryId } }),
       validateTags(data.tagIds),
       resolveUniqueSlug(data.name),
+      generateSubmissionId(),
     ]);
 
     if (!category) {
@@ -98,25 +143,33 @@ export async function submitTool(
       };
     }
 
-    const description = data.description.trim();
-    const shortDescription =
-      description.length > 300
-        ? `${description.slice(0, 297)}...`
-        : description;
+    const listingPlan = data.listingPlan as ListingPlan;
+    const paymentStatus = resolvePaymentStatus(listingPlan);
 
     const tool = await prisma.$transaction(async (tx) => {
       const created = await tx.tool.create({
         data: {
           name: data.name.trim(),
           slug,
-          shortDescription,
-          fullDescription: description,
+          shortDescription: data.shortDescription.trim(),
+          fullDescription: data.fullDescription.trim(),
           websiteUrl: data.websiteUrl.trim(),
+          pricingUrl: normalizeOptionalUrl(data.pricingUrl),
           logo: normalizedLogo,
+          twitterUrl: normalizeOptionalUrl(data.twitterUrl),
+          linkedinUrl: normalizeOptionalUrl(data.linkedinUrl),
+          youtubeUrl: normalizeOptionalUrl(data.youtubeUrl),
+          discordUrl: normalizeOptionalUrl(data.discordUrl),
+          metaTitle: normalizeOptionalText(data.metaTitle),
+          metaDescription: normalizeOptionalText(data.metaDescription),
+          pricingModel: data.pricingModel,
           categoryId: data.categoryId,
-          submittedById: session?.user?.id ?? null,
+          submittedById: session.user.id,
           submitterEmail,
           status: ToolStatus.PENDING,
+          listingPlan,
+          paymentStatus,
+          submissionId,
           featured: false,
           verified: false,
         },
@@ -131,21 +184,123 @@ export async function submitTool(
         });
       }
 
+      if (data.images.length > 0) {
+        await tx.toolImage.createMany({
+          data: data.images.map((image, index) => ({
+            toolId: created.id,
+            imageUrl: image.imageUrl,
+            altText: normalizeOptionalText(image.altText),
+            caption: normalizeOptionalText(image.caption),
+            sortOrder: image.sortOrder ?? index,
+            isPrimary: index === 0,
+          })),
+        });
+      }
+
       return created;
     });
 
-    await sendSubmissionReceivedEmail({
-      submitterEmail,
-      toolName: tool.name,
-    });
+    if (listingPlan === ListingPlan.FREE) {
+      await sendSubmissionReceivedEmail({
+        submitterEmail,
+        toolName: tool.name,
+        submissionId: tool.submissionId!,
+      });
+    }
 
     revalidateSubmissionPaths();
 
-    return { success: true, data: { slug: tool.slug } };
+    return {
+      success: true,
+      data: {
+        toolId: tool.id,
+        submissionId: tool.submissionId!,
+        slug: tool.slug,
+        listingPlan: tool.listingPlan,
+        paymentStatus: tool.paymentStatus,
+      },
+    };
   } catch {
     return {
       success: false,
       error: "Failed to submit tool. Please try again later.",
     };
   }
+}
+
+export async function finalizePaidSubmission(input: {
+  toolId: string;
+  orderId: string;
+}): Promise<ActionResult<{ submissionId: string }>> {
+  const session = await auth();
+
+  if (!session?.user) {
+    return { success: false, error: "You must be signed in." };
+  }
+
+  const tool = await prisma.tool.findUnique({
+    where: { id: input.toolId },
+    select: {
+      id: true,
+      submittedById: true,
+      listingPlan: true,
+      paymentStatus: true,
+      submissionId: true,
+    },
+  });
+
+  if (!tool || tool.submittedById !== session.user.id) {
+    return { success: false, error: "Submission not found." };
+  }
+
+  if (tool.paymentStatus === PaymentStatus.PAID) {
+    return {
+      success: true,
+      data: { submissionId: tool.submissionId! },
+    };
+  }
+
+  const featuredUntil =
+    tool.listingPlan === ListingPlan.FEATURED
+      ? new Date(Date.now() + 28 * 24 * 60 * 60 * 1000)
+      : null;
+
+  await prisma.tool.update({
+    where: { id: tool.id },
+    data: {
+      paymentStatus: PaymentStatus.PAID,
+      paypalOrderId: input.orderId,
+      featured: tool.listingPlan === ListingPlan.FEATURED,
+      featuredUntil,
+    },
+  });
+
+  revalidateSubmissionPaths();
+
+  return {
+    success: true,
+    data: { submissionId: tool.submissionId! },
+  };
+}
+
+export async function getSubmissionSummary(submissionId: string) {
+  const session = await auth();
+
+  if (!session?.user) {
+    return null;
+  }
+
+  return prisma.tool.findFirst({
+    where: {
+      submissionId,
+      submittedById: session.user.id,
+    },
+    select: {
+      submissionId: true,
+      name: true,
+      listingPlan: true,
+      paymentStatus: true,
+      status: true,
+    },
+  });
 }
