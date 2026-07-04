@@ -22,7 +22,7 @@ export type PromotePackage = {
   previewImage: string;
   previewAlt: string;
   ctaLabel: string;
-  mailtoSubject: string;
+  paymentUrl: string;
 };
 
 export type PromoteFaq = {
@@ -65,8 +65,10 @@ export const promotePackages: PromotePackage[] = [
     features: [
       "Your tool appears with logo + name in the hero sponsor chip, linking directly to your website.",
       "Drive consistent clicks and brand exposure from AI-focused visitors.",
-      "Estimated impressions: 15k – 40k/month.",
-      "Limited slots available.",
+      "Exclusive placement — only one homepage sponsor at a time.",
+      "Featured in our AIListify newsletter email blast.",
+      "SEO indexing boost for better discoverability.",
+      "Social media promotion across our official channels.",
     ],
     price: "$99",
     compareAtPrice: "$145",
@@ -75,8 +77,8 @@ export const promotePackages: PromotePackage[] = [
       "Appears at the top of the AIListify homepage above the main headline.",
     previewImage: "/sponsor.png",
     previewAlt: "Preview of the homepage sponsor chip placement",
-    ctaLabel: "Get Featured",
-    mailtoSubject: "Homepage Sponsor Chip Inquiry",
+    ctaLabel: "Reserve Your Spot",
+    paymentUrl: "https://www.paypal.com/ncp/payment/9R9UKC2UR6LF6",
   },
   {
     id: "featured-listing",
@@ -98,7 +100,7 @@ export const promotePackages: PromotePackage[] = [
     previewImage: "/featured.png",
     previewAlt: "Preview of a featured tool card placement",
     ctaLabel: "Get Featured",
-    mailtoSubject: "Featured Listing Inquiry",
+    paymentUrl: "https://www.paypal.com/ncp/payment/TU38MXUMEQ2B4",
   },
 ];
 

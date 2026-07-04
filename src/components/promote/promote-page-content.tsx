@@ -8,7 +8,6 @@ import {
   buildPromoteStats,
   previousSponsors,
   promoteFaqs,
-  promoteMeta,
   promotePackages,
   promoteSections,
   promoteStatsFooter,
@@ -16,10 +15,6 @@ import {
   type PromoteStat,
 } from "@/content/promote";
 import { cn } from "@/lib/utils";
-
-function buildMailto(subject: string) {
-  return `mailto:${promoteMeta.contactEmail}?subject=${encodeURIComponent(subject)}`;
-}
 
 function PromoteStatsBanner({ stats }: { stats: PromoteStat[] }) {
   return (
@@ -135,7 +130,9 @@ function PromotePackageCard({
                 asChild
                 className="h-10 rounded-full bg-neutral-950 px-6 text-white hover:bg-neutral-800"
               >
-                <a href={buildMailto(pkg.mailtoSubject)}>{pkg.ctaLabel}</a>
+                <a href={pkg.paymentUrl} target="_blank" rel="noreferrer">
+                  {pkg.ctaLabel}
+                </a>
               </Button>
 
               <Button
