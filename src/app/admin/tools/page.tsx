@@ -1,10 +1,8 @@
-import Link from "next/link";
 import { Suspense } from "react";
-import { Plus } from "lucide-react";
+import { AdminToolsActions } from "@/components/admin/tools/admin-tools-actions";
 import { ToolsFilters } from "@/components/admin/tools/tools-filters";
 import { ToolsPagination } from "@/components/admin/tools/tools-pagination";
 import { ToolsTable } from "@/components/admin/tools/tools-table";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createMetadata } from "@/lib/metadata";
 import { getAdminToolCategories, getAdminTools } from "@/services/admin/tools";
@@ -52,12 +50,7 @@ export default async function AdminToolsPage({
             Manage AI tool listings, approvals, and featured placements.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/admin/tools/new">
-            <Plus className="h-4 w-4" />
-            Add tool
-          </Link>
-        </Button>
+        <AdminToolsActions />
       </div>
 
       <Suspense fallback={<FiltersSkeleton />}>
