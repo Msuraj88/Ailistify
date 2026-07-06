@@ -21,7 +21,7 @@ const PLANS = [
       "Priority support",
       "Included in our upcoming newsletter",
     ],
-    buttonLabel: "Continue with PayPal",
+    buttonLabel: "Submit Your Tool",
     paymentUrl: "https://www.paypal.com/ncp/payment/BVGDD56RKYSZ8",
     highlighted: true,
     premium: false,
