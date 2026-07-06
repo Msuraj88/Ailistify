@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { middlewareAuth } from "@/lib/auth.middleware";
 
 const authRoutes = ["/login", "/register"];
-const protectedRoutes = ["/admin", "/bookmarks", "/submit"];
+const protectedRoutes = ["/admin", "/bookmarks"];
 
 export default middlewareAuth((req) => {
   const { nextUrl } = req;

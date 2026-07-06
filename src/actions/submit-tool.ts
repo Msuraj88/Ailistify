@@ -9,7 +9,7 @@ import {
 import { auth } from "@/lib/auth";
 import { sendSubmissionReceivedEmail } from "@/lib/email/tool-submission";
 import { isImageKitConfigured } from "@/lib/imagekit/config";
-import { isImageKitUrl } from "@/lib/imagekit/server";
+import { validateSubmitMedia } from "@/lib/imagekit/validate-media";
 import { prisma } from "@/lib/prisma";
 import { generateSubmissionId } from "@/lib/submission/id";
 import { slugify } from "@/lib/utils";
@@ -70,17 +70,7 @@ function validateImageKitMedia(
     return null;
   }
 
-  if (logo && !isImageKitUrl(logo)) {
-    return "Logo must be uploaded via the form uploader.";
-  }
-
-  for (const image of images) {
-    if (!isImageKitUrl(image.imageUrl)) {
-      return "All gallery images must be uploaded via the form uploader.";
-    }
-  }
-
-  return null;
+  return validateSubmitMedia(logo, images);
 }
 
 function resolvePaymentStatus(listingPlan: ListingPlan): PaymentStatus {

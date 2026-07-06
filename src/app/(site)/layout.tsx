@@ -1,7 +1,6 @@
 import { BookmarkProvider } from "@/components/bookmarks/bookmark-provider";
 import { MainLayout } from "@/components/layout/main-layout";
 import { auth } from "@/lib/auth";
-import { isGoogleAuthEnabled } from "@/lib/auth/oauth";
 import { getUserBookmarkToolIds } from "@/services/bookmarks";
 
 export default async function SiteLayout({
@@ -15,7 +14,7 @@ export default async function SiteLayout({
     : [];
 
   return (
-    <MainLayout googleAuthEnabled={isGoogleAuthEnabled()}>
+    <MainLayout>
       <BookmarkProvider initialIds={initialBookmarkIds}>
         {children}
       </BookmarkProvider>

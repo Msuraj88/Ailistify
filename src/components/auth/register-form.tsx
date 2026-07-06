@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,6 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { registerSchema, type RegisterInput } from "@/validations/auth";
+import { normalizeCallbackUrl } from "@/lib/auth/callback-url";
 
 type RegisterFormProps = {
   googleAuthEnabled?: boolean;
@@ -29,6 +30,10 @@ type RegisterFormProps = {
 
 export function RegisterForm({ googleAuthEnabled = false }: RegisterFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = normalizeCallbackUrl(
+    searchParams.get("callbackUrl") ?? "/",
+  );
   const [serverError, setServerError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -70,7 +75,7 @@ export function RegisterForm({ googleAuthEnabled = false }: RegisterFormProps) {
     }
 
     setSuccess(true);
-    router.push("/");
+    router.push(callbackUrl);
     router.refresh();
   }
 
@@ -103,7 +108,10 @@ export function RegisterForm({ googleAuthEnabled = false }: RegisterFormProps) {
 
           {googleAuthEnabled && (
             <>
-              <GoogleSignInButton callbackUrl="/" label="Sign up with Google" />
+              <GoogleSignInButton
+                callbackUrl={callbackUrl}
+                label="Sign up with Google"
+              />
               <AuthDivider label="or sign up with email" />
             </>
           )}

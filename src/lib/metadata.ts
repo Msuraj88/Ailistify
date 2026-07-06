@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { resolveStaticAppUrl } from "@/lib/app-url";
 import { absoluteUrl } from "@/lib/utils";
 
 export const siteConfig = {
@@ -6,7 +7,7 @@ export const siteConfig = {
   title: "AIListify — Discover the Best AI Tools",
   description:
     "Curated directory of the best AI tools for productivity, development, design, marketing, and more. Find, compare, and explore cutting-edge AI software.",
-  url: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  url: resolveStaticAppUrl(),
   ogImage: "/opengraph-image",
   keywords: [
     "AI tools",
