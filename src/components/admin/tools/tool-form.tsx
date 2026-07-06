@@ -30,7 +30,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { ADMIN_TOOL_PRICING_MODELS } from "@/lib/constants/tools";
 import { toDatetimeLocalValue } from "@/lib/monetization/dates";
 import { slugify } from "@/lib/utils";
-import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import type {
   AdminToolDetail,
   AdminToolFormOptions,
@@ -139,8 +138,8 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
   const formDisabled = isSubmitting || isAnalyzing;
   const canAnalyze = websiteUrlCheckState === "available" && !formDisabled;
 
-  const checkWebsiteUrl = useDebouncedCallback(async (url: string) => {
-    const trimmed = url.trim();
+  useEffect(() => {
+    const trimmed = websiteUrlValue.trim();
 
     if (!trimmed) {
       setWebsiteUrlCheckState("idle");
@@ -156,30 +155,48 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
     }
 
     setWebsiteUrlCheckState("checking");
-    const result = await checkToolWebsiteExists(
-      { url: parsed.data.url },
-      tool?.id,
-    );
+    let cancelled = false;
 
-    if (!result.success) {
-      setWebsiteUrlCheckState("idle");
-      setExistingWebsiteTool(null);
-      return;
-    }
+    const timer = window.setTimeout(async () => {
+      try {
+        const result = await checkToolWebsiteExists(
+          { url: parsed.data.url },
+          tool?.id,
+        );
 
-    if (result.data.exists && result.data.tool) {
-      setWebsiteUrlCheckState("exists");
-      setExistingWebsiteTool(result.data.tool);
-      return;
-    }
+        if (cancelled) {
+          return;
+        }
 
-    setWebsiteUrlCheckState("available");
-    setExistingWebsiteTool(null);
-  }, 400);
+        if (!result.success) {
+          setWebsiteUrlCheckState("available");
+          setExistingWebsiteTool(null);
+          return;
+        }
 
-  useEffect(() => {
-    checkWebsiteUrl(websiteUrlValue);
-  }, [websiteUrlValue, checkWebsiteUrl]);
+        if (result.data.exists && result.data.tool) {
+          setWebsiteUrlCheckState("exists");
+          setExistingWebsiteTool(result.data.tool);
+          return;
+        }
+
+        setWebsiteUrlCheckState("available");
+        setExistingWebsiteTool(null);
+      } catch {
+        if (cancelled) {
+          return;
+        }
+
+        setWebsiteUrlCheckState("available");
+        setExistingWebsiteTool(null);
+      }
+    }, 400);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [websiteUrlValue, tool?.id]);
 
   useEffect(() => {
     if (mode === "create" && nameValue) {

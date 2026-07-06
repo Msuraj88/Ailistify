@@ -162,7 +162,9 @@ async function main() {
   });
 
   const matches = tools.filter(isCompanionTool);
-  const toUpdate = matches.filter((tool) => tool.category.slug !== category.slug);
+  const toUpdate = matches.filter(
+    (tool) => tool.category.slug !== category.slug,
+  );
 
   if (toUpdate.length > 0) {
     await prisma.tool.updateMany({
@@ -175,8 +177,9 @@ async function main() {
   console.log(`Matched tools: ${matches.length}`);
   console.log(`Updated tools: ${toUpdate.length}`);
   console.log(
-    toUpdate.map((tool) => `- ${tool.name} (${tool.slug}) from ${tool.category.name}`).join("\n") ||
-      "No tools needed updating.",
+    toUpdate
+      .map((tool) => `- ${tool.name} (${tool.slug}) from ${tool.category.name}`)
+      .join("\n") || "No tools needed updating.",
   );
 
   await prisma.$disconnect();
