@@ -32,3 +32,8 @@ export function normalizeToolUrl(url: string): string {
   parsed.hash = "";
   return parsed.toString().replace(/\/$/, "");
 }
+
+export function normalizeWebsiteHost(url: string): string {
+  const parsed = new URL(normalizeToolUrl(url));
+  return parsed.hostname.replace(/^www\./i, "").toLowerCase();
+}

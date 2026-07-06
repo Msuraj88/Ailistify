@@ -8,7 +8,11 @@ import { Controller, useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { analyzeToolFromUrl } from "@/actions/analyze-tool";
-import { createAdminTool, updateAdminTool } from "@/actions/admin/tools";
+import {
+  checkToolWebsiteExists,
+  createAdminTool,
+  updateAdminTool,
+} from "@/actions/admin/tools";
 import { ToolLogoUpload } from "@/components/admin/tools/tool-logo-upload";
 // import { ToolScreenshotsManager } from "@/components/admin/tools/tool-screenshots-manager";
 import { Button } from "@/components/ui/button";
@@ -26,6 +30,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ADMIN_TOOL_PRICING_MODELS } from "@/lib/constants/tools";
 import { toDatetimeLocalValue } from "@/lib/monetization/dates";
 import { slugify } from "@/lib/utils";
+import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import type {
   AdminToolDetail,
   AdminToolFormOptions,
@@ -37,6 +42,19 @@ type ToolFormProps = {
   mode: "create" | "edit";
   options: AdminToolFormOptions;
   tool?: AdminToolDetail;
+};
+
+type WebsiteUrlCheckState =
+  | "idle"
+  | "checking"
+  | "available"
+  | "exists"
+  | "invalid";
+
+type ExistingWebsiteTool = {
+  id: string;
+  name: string;
+  slug: string;
 };
 
 const defaultValues: ToolFormInput = {
@@ -98,6 +116,10 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzeProgress, setAnalyzeProgress] = useState<string | null>(null);
   const [formResetKey, setFormResetKey] = useState(0);
+  const [websiteUrlCheckState, setWebsiteUrlCheckState] =
+    useState<WebsiteUrlCheckState>("idle");
+  const [existingWebsiteTool, setExistingWebsiteTool] =
+    useState<ExistingWebsiteTool | null>(null);
 
   const {
     register,
@@ -113,7 +135,51 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
   });
 
   const nameValue = watch("name");
+  const websiteUrlValue = watch("websiteUrl");
   const formDisabled = isSubmitting || isAnalyzing;
+  const canAnalyze = websiteUrlCheckState === "available" && !formDisabled;
+
+  const checkWebsiteUrl = useDebouncedCallback(async (url: string) => {
+    const trimmed = url.trim();
+
+    if (!trimmed) {
+      setWebsiteUrlCheckState("idle");
+      setExistingWebsiteTool(null);
+      return;
+    }
+
+    const parsed = analyzeToolUrlSchema.safeParse({ url: trimmed });
+    if (!parsed.success) {
+      setWebsiteUrlCheckState("invalid");
+      setExistingWebsiteTool(null);
+      return;
+    }
+
+    setWebsiteUrlCheckState("checking");
+    const result = await checkToolWebsiteExists(
+      { url: parsed.data.url },
+      tool?.id,
+    );
+
+    if (!result.success) {
+      setWebsiteUrlCheckState("idle");
+      setExistingWebsiteTool(null);
+      return;
+    }
+
+    if (result.data.exists && result.data.tool) {
+      setWebsiteUrlCheckState("exists");
+      setExistingWebsiteTool(result.data.tool);
+      return;
+    }
+
+    setWebsiteUrlCheckState("available");
+    setExistingWebsiteTool(null);
+  }, 400);
+
+  useEffect(() => {
+    checkWebsiteUrl(websiteUrlValue);
+  }, [websiteUrlValue, checkWebsiteUrl]);
 
   useEffect(() => {
     if (mode === "create" && nameValue) {
@@ -256,7 +322,7 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
                 type="button"
                 variant="outline"
                 className="sm:shrink-0"
-                disabled={formDisabled}
+                disabled={!canAnalyze}
                 onClick={handleAnalyze}
               >
                 {isAnalyzing ? (
@@ -270,6 +336,28 @@ export function ToolForm({ mode, options, tool }: ToolFormProps) {
                 Analyze
               </Button>
             </div>
+            {websiteUrlCheckState === "checking" && (
+              <p className="text-sm text-muted-foreground" role="status">
+                Checking if this website is already listed...
+              </p>
+            )}
+            {websiteUrlCheckState === "exists" && existingWebsiteTool && (
+              <p className="text-sm text-destructive" role="alert">
+                This website is already listed as{" "}
+                <Link
+                  href={`/admin/tools/${existingWebsiteTool.id}/edit`}
+                  className="font-medium underline underline-offset-2"
+                >
+                  {existingWebsiteTool.name}
+                </Link>
+                .
+              </p>
+            )}
+            {websiteUrlCheckState === "invalid" && websiteUrlValue.trim() && (
+              <p className="text-sm text-destructive">
+                Please enter a valid URL before analyzing.
+              </p>
+            )}
             {analyzeProgress && (
               <p className="text-sm text-muted-foreground" role="status">
                 {analyzeProgress}
