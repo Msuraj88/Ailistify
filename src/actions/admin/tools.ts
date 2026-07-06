@@ -11,12 +11,14 @@ import {
   resolveSponsoredListingInput,
 } from "@/lib/monetization/listings";
 import { prisma } from "@/lib/prisma";
+import { findToolByWebsiteHost } from "@/services/admin/tools";
 import type { ActionResult } from "@/types";
 import {
   toolFormSchema,
   type ToolFormData,
   type ToolFormInput,
 } from "@/validations/admin-tools";
+import { analyzeToolUrlSchema } from "@/validations/analyze-tool";
 
 const ADMIN_PATHS = ["/admin/tools", "/tools"];
 
@@ -454,4 +456,41 @@ export async function toggleAdminToolVerified(
       error: "Failed to update verified status. Please try again later.",
     };
   }
+}
+
+export async function checkToolWebsiteExists(
+  input: unknown,
+  excludeToolId?: string,
+): Promise<
+  ActionResult<{
+    exists: boolean;
+    tool?: { id: string; name: string; slug: string };
+  }>
+> {
+  const authResult = await requireAdminAction();
+  if (!authResult.success) {
+    return authResult;
+  }
+
+  const parsed = analyzeToolUrlSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: true, data: { exists: false } };
+  }
+
+  const existingTool = await findToolByWebsiteHost(
+    parsed.data.url,
+    excludeToolId,
+  );
+
+  if (!existingTool) {
+    return { success: true, data: { exists: false } };
+  }
+
+  return {
+    success: true,
+    data: {
+      exists: true,
+      tool: existingTool,
+    },
+  };
 }
