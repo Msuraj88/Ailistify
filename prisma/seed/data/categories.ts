@@ -97,4 +97,10 @@ export const categories: CategorySeed[] = [
     description:
       "Text-to-speech, speech-to-text, voice cloning, and conversational voice agents.",
   },
+  {
+    name: "AI Companions",
+    slug: slugify("AI Companions"),
+    description:
+      "AI girlfriend, boyfriend, character chat, and virtual companion platforms for romance, roleplay, and personal connection.",
+  },
 ];

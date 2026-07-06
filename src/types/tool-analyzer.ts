@@ -14,7 +14,7 @@ export const TOOL_ANALYZER_PROGRESS_LABELS: Record<
   analyzing: "Analyzing...",
   reading: "Reading homepage...",
   generating: "Generating content...",
-  finding_logo: "Finding logo...",
+  finding_logo: "Finding favicon...",
   done: "Done.",
 };
 

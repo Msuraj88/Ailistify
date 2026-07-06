@@ -96,8 +96,7 @@ Full description: detailed, helpful, at least 120 characters.
 Meta title: max 70 characters.
 Meta description: max 160 characters.
 
-Detect the most likely logo URL from the provided logo candidates or OpenGraph image.
-If uncertain, return an empty string for logoUrl.
+Return an empty string for logoUrl. Favicon icons are fetched separately from the website.
 
 Set verified=true only for well-known, established products with clear brand presence.
 Set featured=false unless the content strongly indicates a flagship mainstream AI product.

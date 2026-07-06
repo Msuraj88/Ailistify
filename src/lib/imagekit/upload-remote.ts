@@ -80,3 +80,25 @@ export async function uploadRemoteLogoToImageKit(
     return null;
   }
 }
+
+export async function uploadFirstRemoteIcon(
+  iconUrls: string[],
+  toolName: string,
+): Promise<string | null> {
+  const seen = new Set<string>();
+
+  for (const iconUrl of iconUrls) {
+    if (!iconUrl || seen.has(iconUrl)) {
+      continue;
+    }
+
+    seen.add(iconUrl);
+
+    const uploaded = await uploadRemoteLogoToImageKit(iconUrl, toolName);
+    if (uploaded) {
+      return uploaded;
+    }
+  }
+
+  return null;
+}

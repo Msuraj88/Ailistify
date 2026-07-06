@@ -6,7 +6,7 @@ import {
   buildToolAnalyzerPrompt,
   GeminiAnalysisError,
 } from "@/lib/gemini/tool-analyzer";
-import { uploadRemoteLogoToImageKit } from "@/lib/imagekit/upload-remote";
+import { uploadFirstRemoteIcon } from "@/lib/imagekit/upload-remote";
 import { extractWebsiteContent } from "@/lib/scraper/extract";
 import {
   fetchWebsiteHtml,
@@ -54,14 +54,17 @@ async function analyzeToolInternal({
   });
 
   const analysis = await analyzeToolWithGemini(prompt);
-  const logoCandidate =
-    analysis.logoUrl.trim() ||
-    scraped.logoCandidates[0] ||
-    scraped.faviconUrl ||
-    "";
 
-  const uploadedLogoUrl = logoCandidate
-    ? await uploadRemoteLogoToImageKit(logoCandidate, analysis.name || "tool")
+  const faviconCandidates = [
+    ...scraped.faviconCandidates,
+    ...(scraped.faviconUrl &&
+    !scraped.faviconCandidates.includes(scraped.faviconUrl)
+      ? [scraped.faviconUrl]
+      : []),
+  ];
+
+  const uploadedLogoUrl = faviconCandidates.length
+    ? await uploadFirstRemoteIcon(faviconCandidates, analysis.name || "tool")
     : null;
 
   const formFill = mapGeminiAnalysisToFormFill(analysis, {
