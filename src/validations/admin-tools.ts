@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { PRICING_MODELS, TOOL_STATUSES } from "@/lib/constants/tools";
+import {
+  PRICING_MODELS,
+  TOOL_STATUSES,
+  LISTING_PLANS,
+  PAYMENT_STATUSES,
+} from "@/lib/constants/tools";
 
 const optionalUrl = z
   .string()
@@ -86,6 +91,8 @@ export const toolListFiltersSchema = z.object({
     .transform((val) =>
       val === "true" ? true : val === "false" ? false : undefined,
     ),
+  listingPlan: z.enum(LISTING_PLANS).optional(),
+  paymentStatus: z.enum(PAYMENT_STATUSES).optional(),
   sort: z.enum(["newest", "views"]).default("newest"),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(5).max(50).default(10),

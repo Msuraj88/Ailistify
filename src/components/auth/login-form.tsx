@@ -21,6 +21,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { loginSchema, type LoginInput } from "@/validations/auth";
+import { normalizeCallbackUrl } from "@/lib/auth/callback-url";
 
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
   CredentialsSignin: "Invalid email or password. Please try again.",
@@ -48,7 +49,9 @@ type LoginFormProps = {
 export function LoginForm({ googleAuthEnabled = false }: LoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+  const callbackUrl = normalizeCallbackUrl(
+    searchParams.get("callbackUrl") ?? "/",
+  );
   const urlError = searchParams.get("error");
 
   const [serverError, setServerError] = useState<string | null>(

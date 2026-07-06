@@ -1,3 +1,7 @@
+import { configureAuthUrl } from "@/lib/auth/configure-auth-url";
+
+configureAuthUrl();
+
 import NextAuth from "next-auth";
 import { authConfig } from "@/lib/auth.config";
 

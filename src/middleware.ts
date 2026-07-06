@@ -10,8 +10,8 @@ export default middlewareAuth((req) => {
   const role = req.auth?.user?.role;
   const pathname = nextUrl.pathname;
 
-  if (pathname === "/submit" || pathname.startsWith("/submit/")) {
-    const redirectUrl = new URL("/submit-tool", nextUrl);
+  if (pathname === "/submit-tool" || pathname.startsWith("/submit-tool/")) {
+    const redirectUrl = new URL("/submit", nextUrl);
     redirectUrl.search = nextUrl.search;
     return NextResponse.redirect(redirectUrl);
   }
@@ -51,7 +51,10 @@ export const config = {
   matcher: [
     "/admin/:path*",
     "/bookmarks",
+    "/submit",
     "/submit/:path*",
+    "/submit-tool",
+    "/submit-tool/:path*",
     "/login",
     "/register",
   ],

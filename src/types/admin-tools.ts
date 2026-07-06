@@ -1,4 +1,9 @@
-import type { PricingModel, ToolStatus } from "@/generated/prisma/client";
+import type {
+  ListingPlan,
+  PaymentStatus,
+  PricingModel,
+  ToolStatus,
+} from "@/generated/prisma/client";
 
 export type AdminToolListItem = {
   id: string;
@@ -7,6 +12,9 @@ export type AdminToolListItem = {
   logo: string | null;
   pricingModel: PricingModel;
   status: ToolStatus;
+  listingPlan: ListingPlan;
+  paymentStatus: PaymentStatus;
+  submissionId: string | null;
   featured: boolean;
   featuredUntil: Date | null;
   sponsored: boolean;

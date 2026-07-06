@@ -36,6 +36,14 @@ function buildWhere(filters: ToolListFilters): Prisma.ToolWhereInput {
     where.featured = filters.featured;
   }
 
+  if (filters.listingPlan) {
+    where.listingPlan = filters.listingPlan;
+  }
+
+  if (filters.paymentStatus) {
+    where.paymentStatus = filters.paymentStatus;
+  }
+
   return where;
 }
 
@@ -64,6 +72,9 @@ export async function getAdminTools(
         logo: true,
         pricingModel: true,
         status: true,
+        listingPlan: true,
+        paymentStatus: true,
+        submissionId: true,
         featured: true,
         featuredUntil: true,
         sponsored: true,

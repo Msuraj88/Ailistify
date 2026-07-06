@@ -8,7 +8,7 @@ export const NAV_LINKS = [
 export const FOOTER_LINKS = [
   { href: "/tools", label: "All Tools" },
   { href: "/categories", label: "Categories" },
-  { href: "/submit-tool", label: "Submit a Tool" },
+  { href: "/submit", label: "Submit a Tool" },
 ] as const;
 
 export const TOOL_CATEGORIES = [

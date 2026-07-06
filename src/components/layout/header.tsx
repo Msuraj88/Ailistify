@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { Menu, X } from "lucide-react";
 import { GlobalSearch } from "@/components/directory/global-search";
 import { Logo } from "@/components/shared/logo";
 import { UserNav } from "@/components/layout/user-nav";
@@ -41,7 +41,7 @@ export function Header() {
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <UserNav />
           <Button asChild size="sm" className="hidden sm:inline-flex">
-            <Link href="/submit-tool">Submit Tool</Link>
+            <Link href="/submit">Submit Tool</Link>
           </Button>
 
           <Button
@@ -81,10 +81,7 @@ export function Header() {
               ))}
             </div>
             <Button asChild size="sm" className="w-full">
-              <Link
-                href="/submit-tool"
-                onClick={() => setMobileMenuOpen(false)}
-              >
+              <Link href="/submit" onClick={() => setMobileMenuOpen(false)}>
                 Submit Tool
               </Link>
             </Button>

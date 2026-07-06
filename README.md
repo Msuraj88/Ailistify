@@ -49,7 +49,7 @@ A production-ready AI tools directory built with Next.js 15, TypeScript, Tailwin
    npm run dev
    ```
 
-   Open [http://localhost:3000](http://localhost:3000).
+   Open [http://localhost:3001](http://localhost:3001).
 
 ## Scripts
 

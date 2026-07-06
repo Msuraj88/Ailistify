@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { Loader2 } from "lucide-react";
+import { normalizeCallbackUrl } from "@/lib/auth/callback-url";
 import { Button } from "@/components/ui/button";
 
 type GoogleSignInButtonProps = {
@@ -43,7 +44,9 @@ export function GoogleSignInButton({
     setIsLoading(true);
 
     try {
-      await signIn("google", { callbackUrl });
+      await signIn("google", {
+        callbackUrl: normalizeCallbackUrl(callbackUrl),
+      });
     } catch {
       setIsLoading(false);
     }

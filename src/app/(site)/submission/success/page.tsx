@@ -2,22 +2,22 @@ import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { getSubmissionSummary } from "@/actions/submit-tool";
 import { Button } from "@/components/ui/button";
+import { FREE_QUEUE_STATS } from "@/lib/constants/tools";
 import { createNoIndexMetadata } from "@/lib/metadata";
 
 export const metadata = createNoIndexMetadata({
-  title: "Payment Successful",
-  description:
-    "Your payment for AIListify was successful. Your listing is now in priority review.",
-  path: "/payment/success",
+  title: "Submission Successful",
+  description: "Your AI tool submission has been received by AIListify.",
+  path: "/submission/success",
 });
 
-type PaymentSuccessPageProps = {
-  searchParams: Promise<{ submissionId?: string; paid?: string }>;
+type SubmissionSuccessPageProps = {
+  searchParams: Promise<{ submissionId?: string }>;
 };
 
-export default async function PaymentSuccessPage({
+export default async function SubmissionSuccessPage({
   searchParams,
-}: PaymentSuccessPageProps) {
+}: SubmissionSuccessPageProps) {
   const params = await searchParams;
   const submission =
     params.submissionId != null
@@ -32,12 +32,8 @@ export default async function PaymentSuccessPage({
           aria-hidden="true"
         />
         <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
-          Payment Successful!
+          Your AI Tool Has Been Submitted!
         </h1>
-        <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-          Thank you! Your payment has been received. Our team will review and
-          publish your listing within 24 hours.
-        </p>
 
         {submission && (
           <div className="mt-6 space-y-3 rounded-xl border bg-muted/20 p-4 text-left text-sm">
@@ -48,14 +44,25 @@ export default async function PaymentSuccessPage({
           </div>
         )}
 
-        <div className="mt-8 space-y-4">
+        <div className="mt-6 space-y-3 rounded-xl border border-dashed bg-gray-50/80 p-4 text-left">
+          <Row
+            label="Current Queue"
+            value={`${FREE_QUEUE_STATS.waitingCount}+ tools waiting`}
+          />
+          <Row
+            label="Estimated Review"
+            value={`${FREE_QUEUE_STATS.reviewDaysMin}–${FREE_QUEUE_STATS.reviewDaysMax} Days`}
+          />
+        </div>
+
+        <div className="mt-8">
           <Button
             asChild
             className="h-10 rounded-full bg-neutral-950 px-6 text-white hover:bg-neutral-800"
           >
             <Link href="/">Return to AIListify</Link>
           </Button>
-          <p className="text-sm text-muted-foreground">
+          <p className="mt-4 text-sm text-muted-foreground">
             Contact:{" "}
             <a
               href="mailto:hello@ailistify.com"

@@ -254,7 +254,22 @@ export function ToolsTable({ tools }: ToolsTableProps) {
                 <Badge variant="secondary">{tool.pricingModel}</Badge>
               </TableCell>
               <TableCell>
-                <ToolStatusBadge status={tool.status} />
+                <div className="space-y-1">
+                  <ToolStatusBadge status={tool.status} />
+                  <div className="flex flex-wrap gap-1">
+                    <Badge variant="outline" className="text-[10px]">
+                      {tool.listingPlan}
+                    </Badge>
+                    <Badge variant="secondary" className="text-[10px]">
+                      {tool.paymentStatus}
+                    </Badge>
+                  </div>
+                  {tool.submissionId && (
+                    <p className="text-[10px] text-muted-foreground">
+                      {tool.submissionId}
+                    </p>
+                  )}
+                </div>
               </TableCell>
               <TableCell>
                 <div className="flex flex-wrap gap-1">
