@@ -11,7 +11,7 @@ import {
   resolveSponsoredListingInput,
 } from "@/lib/monetization/listings";
 import { prisma } from "@/lib/prisma";
-import { findToolByWebsiteHost } from "@/services/admin/tools";
+import { findToolByWebsiteHost } from "@/lib/tools/website";
 import type { ActionResult } from "@/types";
 import {
   toolFormSchema,
@@ -477,20 +477,28 @@ export async function checkToolWebsiteExists(
     return { success: true, data: { exists: false } };
   }
 
-  const existingTool = await findToolByWebsiteHost(
-    parsed.data.url,
-    excludeToolId,
-  );
+  try {
+    const existingTool = await findToolByWebsiteHost(
+      parsed.data.url,
+      excludeToolId,
+    );
 
-  if (!existingTool) {
-    return { success: true, data: { exists: false } };
+    if (!existingTool) {
+      return { success: true, data: { exists: false } };
+    }
+
+    return {
+      success: true,
+      data: {
+        exists: true,
+        tool: existingTool,
+      },
+    };
+  } catch (error) {
+    console.error("[checkToolWebsiteExists] failed", error);
+    return {
+      success: false,
+      error: "Could not verify this URL. Please try again.",
+    };
   }
-
-  return {
-    success: true,
-    data: {
-      exists: true,
-      tool: existingTool,
-    },
-  };
 }
