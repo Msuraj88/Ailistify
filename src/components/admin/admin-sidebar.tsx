@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ADMIN_NAV_ITEMS } from "@/constants/admin-nav";
 import { Logo } from "@/components/shared/logo";
@@ -13,6 +15,9 @@ type AdminSidebarProps = {
 
 export function AdminSidebar({ onNavigate, className }: AdminSidebarProps) {
   const pathname = usePathname();
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    Content: true,
+  });
 
   return (
     <aside
@@ -24,6 +29,74 @@ export function AdminSidebar({ onNavigate, className }: AdminSidebarProps) {
 
       <nav className="flex-1 space-y-1 overflow-y-auto p-4" aria-label="Admin">
         {ADMIN_NAV_ITEMS.map((item) => {
+          if (item.children?.length) {
+            const isSectionActive = item.children.some((child) =>
+              pathname.startsWith(child.href),
+            );
+            const isOpen = openSections[item.title] ?? isSectionActive;
+
+            return (
+              <div key={item.title} className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setOpenSections((current) => ({
+                      ...current,
+                      [item.title]: !isOpen,
+                    }))
+                  }
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    isSectionActive
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  <span className="flex items-center gap-3">
+                    <item.icon
+                      className="h-4 w-4 shrink-0"
+                      aria-hidden="true"
+                    />
+                    {item.title}
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 transition-transform",
+                      isOpen && "rotate-180",
+                    )}
+                  />
+                </button>
+                {isOpen && (
+                  <div className="ml-4 space-y-1 border-l pl-3">
+                    {item.children.map((child) => {
+                      const isActive = pathname.startsWith(child.href);
+
+                      return (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          onClick={onNavigate}
+                          className={cn(
+                            "block rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                            isActive
+                              ? "bg-primary text-primary-foreground"
+                              : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                          )}
+                        >
+                          {child.title}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          if (!item.href) {
+            return null;
+          }
+
           const isActive =
             item.href === "/admin"
               ? pathname === "/admin"

@@ -100,5 +100,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticRoutes, ...toolRoutes, ...categoryRoutes, ...tagRoutes];
+  const blogPosts = await prisma.blogPost.findMany({
+    where: {
+      OR: [
+        { status: "PUBLISHED" },
+        { status: "SCHEDULED", scheduledAt: { lte: new Date() } },
+      ],
+    },
+    select: { slug: true, updatedAt: true, publishedAt: true },
+    orderBy: { updatedAt: "desc" },
+  });
+
+  const blogRoutes = blogPosts.map((post) => ({
+    url: absoluteUrl(`/blog/${post.slug}`),
+    lastModified: post.updatedAt,
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
+
+  return [
+    ...staticRoutes,
+    ...toolRoutes,
+    ...categoryRoutes,
+    ...tagRoutes,
+    {
+      url: absoluteUrl("/blog"),
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    },
+    ...blogRoutes,
+  ];
 }

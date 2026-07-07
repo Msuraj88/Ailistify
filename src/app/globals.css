@@ -109,3 +109,114 @@
     cursor: not-allowed;
   }
 }
+
+.blog-content {
+  color: var(--foreground);
+  line-height: 1.8;
+  font-size: 1.0625rem;
+}
+
+.blog-content h1 {
+  margin-top: 0;
+  margin-bottom: 1.25rem;
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  scroll-margin-top: 6rem;
+}
+
+.blog-content h2 {
+  margin-top: 2.75rem;
+  margin-bottom: 1rem;
+  font-size: 1.875rem;
+  font-weight: 700;
+  line-height: 1.3;
+  scroll-margin-top: 6rem;
+}
+
+.blog-content h3 {
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.375rem;
+  font-weight: 600;
+  line-height: 1.4;
+  scroll-margin-top: 6rem;
+}
+
+.blog-content p {
+  margin-bottom: 1.25rem;
+  line-height: 1.85;
+}
+
+.blog-content ul,
+.blog-content ol,
+.blog-content table,
+.blog-content blockquote,
+.blog-content pre,
+.blog-content .blog-faq,
+.blog-content .blog-cta {
+  margin-bottom: 1.5rem;
+}
+
+.blog-content ul,
+.blog-content ol {
+  padding-left: 1.5rem;
+}
+
+.blog-content li {
+  margin-bottom: 0.5rem;
+}
+
+.blog-content a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.blog-content blockquote {
+  border-left: 4px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted-foreground);
+}
+
+.blog-content table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.blog-content th,
+.blog-content td {
+  border: 1px solid var(--border);
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.blog-content img,
+.blog-content iframe {
+  max-width: 100%;
+  border-radius: 0.75rem;
+}
+
+.blog-content .blog-faq h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.blog-content .blog-faq h3:first-child {
+  margin-top: 0;
+}
+
+.blog-content .blog-cta {
+  margin-top: 2rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--muted) 35%, transparent);
+  padding: 1.5rem;
+}
+
+.blog-content .blog-cta p:last-child {
+  margin-bottom: 0;
+}
