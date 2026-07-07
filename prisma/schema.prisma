@@ -44,6 +44,20 @@ enum PaymentStatus {
   CANCELLED
 }
 
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  ARCHIVED
+}
+
+enum BlogRobots {
+  INDEX_FOLLOW
+  NOINDEX_FOLLOW
+  INDEX_NOFOLLOW
+  NOINDEX_NOFOLLOW
+}
+
 // ─── Auth.js models ──────────────────────────────────────────────────────────
 
 model User {
@@ -62,6 +76,7 @@ model User {
   reviews        Review[]
   bookmarks      Bookmark[]
   submittedTools Tool[]     @relation("SubmittedTools")
+  blogPosts      BlogPost[] @relation("BlogAuthor")
 
   @@index([role])
   @@index([createdAt(sort: Desc)])
@@ -278,5 +293,61 @@ model ContactSubmission {
   createdAt DateTime @default(now())
 
   @@index([email])
+  @@index([createdAt(sort: Desc)])
+}
+
+// ─── Content Studio (Blog) ───────────────────────────────────────────────────
+
+model BlogCategory {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  posts BlogPost[]
+
+  @@index([slug])
+  @@index([name])
+}
+
+model BlogPost {
+  id                String     @id @default(cuid())
+  title             String
+  slug              String     @unique
+  excerpt           String?    @db.VarChar(500)
+  content           String     @db.Text
+  featuredImage     String?
+  featuredImageId   String?
+  status            BlogStatus @default(DRAFT)
+  publishedAt       DateTime?
+  scheduledAt       DateTime?
+  views             Int        @default(0)
+  metaTitle         String?    @db.VarChar(70)
+  metaDescription   String?    @db.VarChar(160)
+  focusKeyword      String?    @db.VarChar(100)
+  canonicalUrl      String?
+  robots            BlogRobots @default(INDEX_FOLLOW)
+  ogTitle           String?    @db.VarChar(70)
+  ogDescription     String?    @db.VarChar(160)
+  ogImage           String?
+  faqJson           String?    @db.Text
+  cta               String?    @db.Text
+  categoryId        String?
+  authorId          String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  category BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  author   User?         @relation("BlogAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([slug])
+  @@index([status])
+  @@index([categoryId])
+  @@index([authorId])
+  @@index([publishedAt(sort: Desc)])
+  @@index([scheduledAt])
+  @@index([status, publishedAt(sort: Desc)])
   @@index([createdAt(sort: Desc)])
 }
