@@ -68,6 +68,11 @@ export const submitToolSchema = z.object({
 export type SubmitToolInput = z.input<typeof submitToolSchema>;
 export type SubmitToolData = z.output<typeof submitToolSchema>;
 
+export const updateMyToolSchema = submitToolSchema.omit({ listingPlan: true });
+
+export type UpdateMyToolInput = z.input<typeof updateMyToolSchema>;
+export type UpdateMyToolData = z.output<typeof updateMyToolSchema>;
+
 export const rejectToolSubmissionSchema = z.object({
   toolId: z.string().min(1),
   reason: z

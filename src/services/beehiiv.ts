@@ -83,6 +83,10 @@ async function getSubscriptionByEmail(
 
 export async function subscribeToBeehiivPublication(
   email: string,
+  options?: {
+    utmMedium?: string;
+    sendWelcomeEmail?: boolean;
+  },
 ): Promise<BeehiivSubscribeResult> {
   const config = getBeehiivConfig();
 
@@ -108,9 +112,9 @@ export async function subscribeToBeehiivPublication(
         body: JSON.stringify({
           email,
           reactivate_existing: false,
-          send_welcome_email: true,
+          send_welcome_email: options?.sendWelcomeEmail ?? true,
           utm_source: "ailistify",
-          utm_medium: "website",
+          utm_medium: options?.utmMedium ?? "website",
         }),
         cache: "no-store",
       },

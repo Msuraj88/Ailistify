@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { middlewareAuth } from "@/lib/auth.middleware";
 
 const authRoutes = ["/login", "/register"];
-const protectedRoutes = ["/admin", "/bookmarks"];
+const protectedRoutes = ["/admin", "/bookmarks", "/my-tools"];
 
 export default middlewareAuth((req) => {
   const { nextUrl } = req;
@@ -11,7 +11,7 @@ export default middlewareAuth((req) => {
   const pathname = nextUrl.pathname;
 
   if (pathname === "/submit-tool" || pathname.startsWith("/submit-tool/")) {
-    const redirectUrl = new URL("/submit", nextUrl);
+    const redirectUrl = new URL("/my-tools", nextUrl);
     redirectUrl.search = nextUrl.search;
     return NextResponse.redirect(redirectUrl);
   }
@@ -41,6 +41,10 @@ export default middlewareAuth((req) => {
   }
 
   if (isLoggedIn && isAuthRoute) {
+    const callbackUrl = nextUrl.searchParams.get("callbackUrl");
+    if (callbackUrl?.startsWith("/") && !callbackUrl.startsWith("//")) {
+      return NextResponse.redirect(new URL(callbackUrl, nextUrl));
+    }
     return NextResponse.redirect(new URL("/", nextUrl));
   }
 
@@ -51,6 +55,8 @@ export const config = {
   matcher: [
     "/admin/:path*",
     "/bookmarks",
+    "/my-tools",
+    "/my-tools/:path*",
     "/submit",
     "/submit/:path*",
     "/submit-tool",

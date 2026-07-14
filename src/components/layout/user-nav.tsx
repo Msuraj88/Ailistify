@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
-import { Bookmark, Loader2, LogOut, Shield, User } from "lucide-react";
+import { Bookmark, Loader2, LogOut, Shield, User, Wrench } from "lucide-react";
+import { useAuthDialog } from "@/components/auth/auth-dialog-provider";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,6 +17,7 @@ import { isAdmin } from "@/lib/auth/roles";
 
 export function UserNav() {
   const { data: session, status } = useSession();
+  const { openLogin } = useAuthDialog();
 
   if (status === "loading") {
     return (
@@ -29,12 +31,13 @@ export function UserNav() {
     return (
       <div className="flex items-center gap-2">
         <Button
-          asChild
+          type="button"
           variant="ghost"
           size="sm"
           className="hidden sm:inline-flex"
+          onClick={() => openLogin("/")}
         >
-          <Link href="/login">Sign in</Link>
+          Sign in
         </Button>
         <Button asChild size="sm">
           <Link href="/register">Sign up</Link>
@@ -70,6 +73,14 @@ export function UserNav() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {!admin && (
+          <DropdownMenuItem asChild>
+            <Link href="/my-tools" className="cursor-pointer">
+              <Wrench className="mr-2 h-4 w-4" />
+              My tools
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem asChild>
           <Link href="/bookmarks" className="cursor-pointer">
             <Bookmark className="mr-2 h-4 w-4" />

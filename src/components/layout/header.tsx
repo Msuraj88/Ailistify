@@ -6,6 +6,7 @@ import { Menu, X } from "lucide-react";
 import { GlobalSearch } from "@/components/directory/global-search";
 import { Logo } from "@/components/shared/logo";
 import { UserNav } from "@/components/layout/user-nav";
+import { SubmitToolButton } from "@/components/submit-tool/submit-tool-button";
 import { Button } from "@/components/ui/button";
 import { NAV_LINKS } from "@/constants";
 
@@ -40,9 +41,7 @@ export function Header() {
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <UserNav />
-          <Button asChild size="sm" className="hidden sm:inline-flex">
-            <Link href="/submit">Submit Tool</Link>
-          </Button>
+          <SubmitToolButton className="hidden sm:inline-flex" />
 
           <Button
             variant="ghost"
@@ -80,11 +79,10 @@ export function Header() {
                 </Link>
               ))}
             </div>
-            <Button asChild size="sm" className="w-full">
-              <Link href="/submit" onClick={() => setMobileMenuOpen(false)}>
-                Submit Tool
-              </Link>
-            </Button>
+            <SubmitToolButton
+              fullWidth
+              onNavigate={() => setMobileMenuOpen(false)}
+            />
           </div>
         </nav>
       )}
