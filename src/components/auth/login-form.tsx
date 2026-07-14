@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/card";
 import { loginSchema, type LoginInput } from "@/validations/auth";
 import { normalizeCallbackUrl } from "@/lib/auth/callback-url";
+import { cn } from "@/lib/utils";
 
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
   CredentialsSignin: "Invalid email or password. Please try again.",
@@ -44,13 +45,21 @@ function getAuthErrorMessage(error: string | null): string | null {
 
 type LoginFormProps = {
   googleAuthEnabled?: boolean;
+  variant?: "page" | "modal";
+  callbackUrl?: string;
+  onSuccess?: () => void;
 };
 
-export function LoginForm({ googleAuthEnabled = false }: LoginFormProps) {
+export function LoginForm({
+  googleAuthEnabled = false,
+  variant = "page",
+  callbackUrl: callbackUrlProp,
+  onSuccess,
+}: LoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = normalizeCallbackUrl(
-    searchParams.get("callbackUrl") ?? "/",
+    callbackUrlProp ?? searchParams.get("callbackUrl") ?? "/",
   );
   const urlError = searchParams.get("error");
 
@@ -68,6 +77,9 @@ export function LoginForm({ googleAuthEnabled = false }: LoginFormProps) {
     defaultValues: { email: "", password: "" },
   });
 
+  const isModal = variant === "modal";
+  const registerHref = `/register?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+
   async function onSubmit(data: LoginInput) {
     setServerError(null);
     setSuccess(false);
@@ -84,8 +96,112 @@ export function LoginForm({ googleAuthEnabled = false }: LoginFormProps) {
     }
 
     setSuccess(true);
+    onSuccess?.();
     router.push(callbackUrl);
     router.refresh();
+  }
+
+  const header = (
+    <div className={cn("space-y-1", isModal ? "text-center" : "text-center")}>
+      <h2 className="text-2xl font-bold tracking-tight">Welcome back</h2>
+      <p className="text-sm text-muted-foreground">
+        Sign in to your AIListify account to continue
+      </p>
+    </div>
+  );
+
+  const body = (
+    <>
+      {serverError && (
+        <div
+          role="alert"
+          className="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+        >
+          {serverError}
+        </div>
+      )}
+      {success && (
+        <div
+          role="status"
+          className="rounded-md border border-primary/50 bg-primary/10 px-4 py-3 text-sm text-primary"
+        >
+          Login successful. Redirecting...
+        </div>
+      )}
+
+      {googleAuthEnabled && (
+        <>
+          <GoogleSignInButton callbackUrl={callbackUrl} />
+          <AuthDivider />
+        </>
+      )}
+
+      <div className="space-y-2">
+        <Label htmlFor={isModal ? "modal-email" : "email"}>Email</Label>
+        <Input
+          id={isModal ? "modal-email" : "email"}
+          type="email"
+          placeholder="you@example.com"
+          autoComplete="email"
+          disabled={isSubmitting}
+          {...register("email")}
+        />
+        {errors.email && (
+          <p className="text-sm text-destructive">{errors.email.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor={isModal ? "modal-password" : "password"}>
+          Password
+        </Label>
+        <Input
+          id={isModal ? "modal-password" : "password"}
+          type="password"
+          placeholder="••••••••"
+          autoComplete="current-password"
+          disabled={isSubmitting}
+          {...register("password")}
+        />
+        {errors.password && (
+          <p className="text-sm text-destructive">{errors.password.message}</p>
+        )}
+      </div>
+    </>
+  );
+
+  const footer = (
+    <>
+      <Button type="submit" className="w-full" disabled={isSubmitting}>
+        {isSubmitting ? (
+          <>
+            <Loader2 className="animate-spin" aria-hidden="true" />
+            Signing in...
+          </>
+        ) : (
+          "Sign in"
+        )}
+      </Button>
+      <p className="text-center text-sm text-muted-foreground">
+        Don&apos;t have an account?{" "}
+        <Link
+          href={registerHref}
+          className="font-medium text-primary hover:underline"
+        >
+          Create one
+        </Link>
+      </p>
+    </>
+  );
+
+  if (isModal) {
+    return (
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-0">
+        <div className="space-y-6 px-6 pb-2 pt-8">{header}</div>
+        <div className="space-y-4 px-6 py-2">{body}</div>
+        <div className="flex flex-col gap-4 px-6 pb-8 pt-4">{footer}</div>
+      </form>
+    );
   }
 
   return (
@@ -97,84 +213,8 @@ export function LoginForm({ googleAuthEnabled = false }: LoginFormProps) {
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <CardContent className="space-y-4">
-          {serverError && (
-            <div
-              role="alert"
-              className="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-            >
-              {serverError}
-            </div>
-          )}
-          {success && (
-            <div
-              role="status"
-              className="rounded-md border border-primary/50 bg-primary/10 px-4 py-3 text-sm text-primary"
-            >
-              Login successful. Redirecting...
-            </div>
-          )}
-
-          {googleAuthEnabled && (
-            <>
-              <GoogleSignInButton callbackUrl={callbackUrl} />
-              <AuthDivider />
-            </>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              autoComplete="email"
-              disabled={isSubmitting}
-              {...register("email")}
-            />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              autoComplete="current-password"
-              disabled={isSubmitting}
-              {...register("password")}
-            />
-            {errors.password && (
-              <p className="text-sm text-destructive">
-                {errors.password.message}
-              </p>
-            )}
-          </div>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-4">
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="animate-spin" aria-hidden="true" />
-                Signing in...
-              </>
-            ) : (
-              "Sign in"
-            )}
-          </Button>
-          <p className="text-center text-sm text-muted-foreground">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/register"
-              className="font-medium text-primary hover:underline"
-            >
-              Create one
-            </Link>
-          </p>
-        </CardFooter>
+        <CardContent className="space-y-4">{body}</CardContent>
+        <CardFooter className="flex flex-col gap-4">{footer}</CardFooter>
       </form>
     </Card>
   );

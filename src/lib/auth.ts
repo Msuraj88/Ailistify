@@ -8,12 +8,31 @@ import { authConfig, getOAuthProviders } from "@/lib/auth.config";
 import { ensureAdminRole, isAdminEmail } from "@/lib/auth/admin";
 import { credentialsProvider } from "@/lib/auth/credentials-provider";
 import { prisma } from "@/lib/prisma";
+import { subscribeToBeehiivPublication } from "@/services/beehiiv";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
   secret: process.env.AUTH_SECRET,
   providers: [credentialsProvider, ...getOAuthProviders()],
+  events: {
+    async createUser({ user }) {
+      const email = user.email?.toLowerCase().trim();
+      if (!email) {
+        return;
+      }
+
+      // Covers OAuth (e.g. Google) first-time account creation.
+      void subscribeToBeehiivPublication(email, {
+        utmMedium: "signup",
+      }).catch((error) => {
+        console.error(
+          "[auth] beehiiv subscribe failed after createUser",
+          error,
+        );
+      });
+    },
+  },
   callbacks: {
     ...authConfig.callbacks,
     async signIn({ user }) {

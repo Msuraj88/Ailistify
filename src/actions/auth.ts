@@ -3,6 +3,7 @@
 import { hashPassword } from "@/lib/auth/password";
 import { UserRole } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { subscribeToBeehiivPublication } from "@/services/beehiiv";
 import { registerSchema } from "@/validations/auth";
 import type { ActionResult } from "@/types";
 import type { RegisterInput } from "@/validations/auth";
@@ -43,6 +44,13 @@ export async function registerUser(
         password: hashedPassword,
         role: UserRole.USER,
       },
+    });
+
+    // Do not block signup if Beehiiv is unavailable.
+    void subscribeToBeehiivPublication(normalizedEmail, {
+      utmMedium: "signup",
+    }).catch((error) => {
+      console.error("[auth] beehiiv subscribe failed after signup", error);
     });
 
     return { success: true, data: { email: normalizedEmail } };
