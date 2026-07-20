@@ -121,7 +121,8 @@ export async function publishTool(
     if (
       tool.status !== ToolStatus.PENDING &&
       tool.status !== ToolStatus.DRAFT &&
-      tool.status !== ToolStatus.REJECTED
+      tool.status !== ToolStatus.REJECTED &&
+      tool.status !== ToolStatus.ARCHIVED
     ) {
       return {
         success: false,

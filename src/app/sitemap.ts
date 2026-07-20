@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { ToolStatus } from "@/generated/prisma/client";
+import { getAllBestPages } from "@/data/best-pages";
 import { prisma } from "@/lib/prisma";
 import { absoluteUrl } from "@/lib/utils";
 
@@ -77,7 +78,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.7,
     },
+    {
+      url: absoluteUrl("/best"),
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.85,
+    },
   ];
+
+  const bestRoutes = getAllBestPages().map((page) => ({
+    url: absoluteUrl(`/best/${page.slug}`),
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.8,
+  }));
 
   const toolRoutes = tools.map((tool) => ({
     url: absoluteUrl(`/tools/${tool.slug}`),
@@ -120,6 +134,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticRoutes,
+    ...bestRoutes,
     ...toolRoutes,
     ...categoryRoutes,
     ...tagRoutes,
