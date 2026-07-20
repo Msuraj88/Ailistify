@@ -27,6 +27,7 @@ export const PAYMENT_STATUSES = [
   "NOT_REQUIRED",
   "PENDING",
   "PAID",
+  "FAILED",
   "CANCELLED",
 ] as const;
 export type PaymentStatusValue = (typeof PAYMENT_STATUSES)[number];
@@ -34,6 +35,16 @@ export type PaymentStatusValue = (typeof PAYMENT_STATUSES)[number];
 export const SUBMIT_PLAN_PRICES = {
   PRIORITY: 19,
   FEATURED: 49,
+} as const;
+
+export const PROMOTE_PLAN_PRICES = {
+  HOMEPAGE_SPONSOR: 99,
+  FEATURED_LISTING: 49,
+} as const;
+
+export const PROMOTE_PLAN_LABELS = {
+  HOMEPAGE_SPONSOR: "Homepage Sponsor",
+  FEATURED_LISTING: "Featured Listing",
 } as const;
 
 export const FREE_QUEUE_STATS = {

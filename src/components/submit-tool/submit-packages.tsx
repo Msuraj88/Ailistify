@@ -1,6 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SUBMIT_PLAN_PRICES } from "@/lib/constants/tools";
 import { cn } from "@/lib/utils";
@@ -8,6 +9,7 @@ import { cn } from "@/lib/utils";
 const PLANS = [
   {
     id: "priority",
+    plan: "PRIORITY" as const,
     badge: "⭐ Most Popular",
     title: "Priority Listing",
     price: `$${SUBMIT_PLAN_PRICES.PRIORITY}`,
@@ -22,12 +24,12 @@ const PLANS = [
       "Included in our upcoming newsletter",
     ],
     buttonLabel: "Submit Your Tool",
-    paymentUrl: "https://www.paypal.com/ncp/payment/BVGDD56RKYSZ8",
     highlighted: true,
     premium: false,
   },
   {
     id: "featured",
+    plan: "FEATURED" as const,
     badge: "🚀 Best Value",
     title: "Featured Listing",
     price: `$${SUBMIT_PLAN_PRICES.FEATURED}`,
@@ -43,7 +45,6 @@ const PLANS = [
       "Only one homepage featured sponsor at a time",
     ],
     buttonLabel: "Get Featured",
-    paymentUrl: "https://www.paypal.com/ncp/payment/TU38MXUMEQ2B4",
     highlighted: false,
     premium: true,
   },
@@ -58,7 +59,7 @@ export function SubmitPackages() {
         </h1>
         <p className="mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
           Get your AI tool in front of thousands of founders, developers, and AI
-          enthusiasts. Pick a plan and complete your payment to get started.
+          enthusiasts. Submit your tool, then complete secure PayPal checkout.
         </p>
       </header>
 
@@ -67,7 +68,7 @@ export function SubmitPackages() {
           <article
             key={plan.id}
             className={cn(
-              "rounded-[20px] border bg-white p-6 transition-transform hover:scale-[1.01] hover:shadow-lg sm:p-8",
+              "rounded-[20px] border bg-white p-6 transition-transform hover:scale-[1.01] hover:shadow-lg sm:p-8 dark:bg-card",
               plan.premium
                 ? "border-transparent bg-gradient-to-br from-violet-500/20 via-fuchsia-500/10 to-amber-400/20 p-[1px]"
                 : "border-gray-200/80",
@@ -75,7 +76,7 @@ export function SubmitPackages() {
           >
             <div
               className={cn(
-                "h-full rounded-[19px] bg-white p-6 sm:p-7",
+                "h-full rounded-[19px] bg-white p-6 sm:p-7 dark:bg-card",
                 plan.premium && "rounded-[19px]",
               )}
             >
@@ -111,7 +112,9 @@ export function SubmitPackages() {
                     : "",
                 )}
               >
-                <a href={plan.paymentUrl}>{plan.buttonLabel}</a>
+                <Link href={`/my-tools/submit?plan=${plan.plan}`}>
+                  {plan.buttonLabel}
+                </Link>
               </Button>
             </div>
           </article>

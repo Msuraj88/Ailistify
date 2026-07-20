@@ -21,7 +21,11 @@ export type MyToolListItem = {
   canEdit: boolean;
 };
 
-function getQueueMeta(status: ToolStatus, listingPlan: string) {
+function getQueueMeta(
+  status: ToolStatus,
+  listingPlan: string,
+  paymentStatus: string,
+) {
   if (status === ToolStatus.PUBLISHED) {
     return {
       queueLabel: "Published",
@@ -43,6 +47,18 @@ function getQueueMeta(status: ToolStatus, listingPlan: string) {
       queueLabel: "Archived",
       estimatedReview: "No longer in review",
       canEdit: false,
+    };
+  }
+
+  const isPaidPremium =
+    paymentStatus === "PAID" &&
+    (listingPlan === "PRIORITY" || listingPlan === "FEATURED");
+
+  if (isPaidPremium) {
+    return {
+      queueLabel: "Under Review",
+      estimatedReview: "Estimated publish: within 24 hours",
+      canEdit: true,
     };
   }
 
@@ -83,7 +99,11 @@ export async function getMySubmittedTools(userId: string) {
   });
 
   return tools.map((tool) => {
-    const meta = getQueueMeta(tool.status, tool.listingPlan);
+    const meta = getQueueMeta(
+      tool.status,
+      tool.listingPlan,
+      tool.paymentStatus,
+    );
     return {
       ...tool,
       listingPlan: tool.listingPlan,

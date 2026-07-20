@@ -3,8 +3,9 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Pencil, Rocket } from "lucide-react";
+import { CreditCard, Pencil, Rocket } from "lucide-react";
 import { toast } from "sonner";
+import { retryToolPayment } from "@/actions/payments";
 import { upgradeMyToolListing } from "@/actions/submit-tool";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { trackPaymentEvent } from "@/lib/analytics/payments";
 import { SUBMIT_PLAN_PRICES } from "@/lib/constants/tools";
 import { buildImageKitUrl } from "@/lib/imagekit/client";
 import { cn } from "@/lib/utils";
@@ -47,28 +49,85 @@ export function MyToolsList({ tools }: MyToolsListProps) {
   );
 }
 
+function paymentBadgeClass(status: string) {
+  switch (status) {
+    case "PAID":
+      return "bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100";
+    case "PENDING":
+      return "bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-100";
+    case "FAILED":
+      return "bg-destructive/10 text-destructive";
+    case "CANCELLED":
+      return "bg-muted text-muted-foreground";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+}
+
 function MyToolCard({ tool }: { tool: MyToolListItem }) {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgrading, setUpgrading] = useState<"PRIORITY" | "FEATURED" | null>(
     null,
   );
+  const [retrying, setRetrying] = useState(false);
+
+  const needsPayment =
+    (tool.listingPlan === "PRIORITY" || tool.listingPlan === "FEATURED") &&
+    tool.paymentStatus !== "PAID" &&
+    tool.paymentStatus !== "NOT_REQUIRED" &&
+    tool.status !== "PUBLISHED" &&
+    tool.status !== "ARCHIVED";
+
+  async function redirectToCheckout(approvalUrl: string) {
+    window.location.assign(approvalUrl);
+  }
 
   async function handleUpgrade(plan: "PRIORITY" | "FEATURED") {
     setUpgrading(plan);
     try {
+      trackPaymentEvent("begin_checkout", {
+        item_name: plan,
+        value: SUBMIT_PLAN_PRICES[plan],
+        currency: "USD",
+        submission_id: tool.submissionId ?? undefined,
+      });
+
       const result = await upgradeMyToolListing(tool.id, plan);
       if (!result.success) {
         toast.error(result.error);
         return;
       }
 
-      toast.success("Redirecting to premium checkout...");
-      window.open(result.data.paymentUrl, "_blank", "noopener,noreferrer");
+      toast.success("Redirecting to PayPal Checkout...");
       setUpgradeOpen(false);
+      await redirectToCheckout(result.data.paymentUrl);
     } catch {
       toast.error("Could not start premium upgrade.");
     } finally {
       setUpgrading(null);
+    }
+  }
+
+  async function handleRetryPayment() {
+    setRetrying(true);
+    try {
+      trackPaymentEvent("payment_retry", {
+        submission_id: tool.submissionId ?? undefined,
+        item_name: tool.listingPlan,
+      });
+
+      const result = await retryToolPayment(tool.id);
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success("Redirecting to PayPal Checkout...");
+      await redirectToCheckout(result.data.approvalUrl);
+    } catch {
+      toast.error("Could not retry payment.");
+    } finally {
+      setRetrying(false);
     }
   }
 
@@ -98,6 +157,8 @@ function MyToolCard({ tool }: { tool: MyToolListItem }) {
                 "rounded-full px-2.5 py-0.5 text-xs font-medium",
                 tool.queueLabel === "Queue" &&
                   "bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-100",
+                tool.queueLabel === "Under Review" &&
+                  "bg-sky-100 text-sky-900 dark:bg-sky-950/50 dark:text-sky-100",
                 tool.queueLabel === "Published" &&
                   "bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100",
                 tool.queueLabel === "Rejected" &&
@@ -107,6 +168,14 @@ function MyToolCard({ tool }: { tool: MyToolListItem }) {
               )}
             >
               {tool.queueLabel}
+            </span>
+            <span
+              className={cn(
+                "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                paymentBadgeClass(tool.paymentStatus),
+              )}
+            >
+              Payment: {tool.paymentStatus}
             </span>
           </div>
           <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
@@ -118,6 +187,7 @@ function MyToolCard({ tool }: { tool: MyToolListItem }) {
           {tool.category && (
             <p className="mt-1 text-xs text-muted-foreground">
               {tool.category.name} · {tool.listingPlan} plan
+              {tool.submissionId ? ` · ${tool.submissionId}` : ""}
             </p>
           )}
         </div>
@@ -132,12 +202,28 @@ function MyToolCard({ tool }: { tool: MyToolListItem }) {
             </Link>
           </Button>
         )}
-        {tool.status !== "PUBLISHED" && tool.status !== "ARCHIVED" && (
-          <Button size="sm" onClick={() => setUpgradeOpen(true)}>
-            <Rocket className="h-4 w-4" />
-            Upgrade to Premium Launch
+        {needsPayment && (
+          <Button
+            size="sm"
+            onClick={() => void handleRetryPayment()}
+            disabled={retrying}
+          >
+            <CreditCard className="h-4 w-4" />
+            {retrying ? "Starting checkout..." : "Retry Payment"}
           </Button>
         )}
+        {tool.status !== "PUBLISHED" &&
+          tool.status !== "ARCHIVED" &&
+          tool.paymentStatus !== "PAID" && (
+            <Button
+              size="sm"
+              variant={needsPayment ? "outline" : "default"}
+              onClick={() => setUpgradeOpen(true)}
+            >
+              <Rocket className="h-4 w-4" />
+              Upgrade to Premium Launch
+            </Button>
+          )}
         {tool.status === "PUBLISHED" && (
           <Button asChild variant="outline" size="sm">
             <Link href={`/tools/${tool.slug}`} target="_blank">
@@ -153,7 +239,7 @@ function MyToolCard({ tool }: { tool: MyToolListItem }) {
             <DialogTitle>Upgrade to Premium Launch</DialogTitle>
             <DialogDescription>
               Skip the free queue and get published faster with Priority or
-              Featured listing.
+              Featured listing. You will complete payment via PayPal Checkout.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3">
@@ -171,7 +257,7 @@ function MyToolCard({ tool }: { tool: MyToolListItem }) {
               </p>
               {upgrading === "PRIORITY" && (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Starting checkout...
+                  Starting PayPal checkout...
                 </p>
               )}
             </button>
@@ -190,7 +276,7 @@ function MyToolCard({ tool }: { tool: MyToolListItem }) {
               </p>
               {upgrading === "FEATURED" && (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Starting checkout...
+                  Starting PayPal checkout...
                 </p>
               )}
             </button>

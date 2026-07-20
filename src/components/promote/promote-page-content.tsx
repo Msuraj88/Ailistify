@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -130,9 +131,9 @@ function PromotePackageCard({
                 asChild
                 className="h-10 rounded-full bg-neutral-950 px-6 text-white hover:bg-neutral-800"
               >
-                <a href={pkg.paymentUrl} target="_blank" rel="noreferrer">
+                <Link href={`/promote/checkout?plan=${pkg.plan}`}>
                   {pkg.ctaLabel}
-                </a>
+                </Link>
               </Button>
 
               <Button

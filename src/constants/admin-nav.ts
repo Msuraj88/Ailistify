@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  CreditCard,
   FolderTree,
   LayoutDashboard,
   MessageSquare,
@@ -36,6 +37,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     ],
   },
   { title: "Users", href: "/admin/users", icon: Users },
+  { title: "Payments", href: "/admin/payments", icon: CreditCard },
   { title: "Reviews", href: "/admin/reviews", icon: MessageSquare },
   { title: "Settings", href: "/admin/settings", icon: Settings },
 ];
@@ -49,6 +51,7 @@ export const ADMIN_BREADCRUMB_LABELS: Record<string, string> = {
   blogs: "Blogs",
   "blog-categories": "Blog Categories",
   users: "Users",
+  payments: "Payments",
   reviews: "Reviews",
   settings: "Settings",
   new: "New",
