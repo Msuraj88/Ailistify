@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { EmptyState } from "@/components/admin/empty-state";
+import { BestGuideCard } from "@/components/best/best-guide-card";
 import { NewsletterForm } from "@/components/directory/newsletter-form";
 import { CategoryCard } from "@/components/tools/category-card";
 import { ToolCard } from "@/components/tools/tool-card";
 import { Button } from "@/components/ui/button";
+import { getBestPageCardSummaries } from "@/data/best-pages";
 import type { HomePageData } from "@/types/directory";
 
 type HomeSectionsProps = {
@@ -94,6 +96,37 @@ export function LatestToolsSection({
   );
 }
 
+export function BestToolsGuidesSection() {
+  const pages = getBestPageCardSummaries();
+
+  return (
+    <section className="py-10" aria-labelledby="best-tools-heading">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <h2
+            id="best-tools-heading"
+            className="text-2xl font-bold tracking-tight sm:text-3xl"
+          >
+            Best AI Tools
+          </h2>
+          <Button variant="outline" asChild>
+            <Link href="/best">
+              All Best Guides
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </Button>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {pages.map((page) => (
+            <BestGuideCard key={page.slug} page={page} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function CategoriesSection({
   categories,
 }: {
@@ -160,6 +193,7 @@ export function HomeSections({ data }: HomeSectionsProps) {
     <>
       <FeaturedToolsSection tools={data.featuredTools} />
       <LatestToolsSection tools={data.latestTools} />
+      <BestToolsGuidesSection />
       <CategoriesSection categories={data.popularCategories} />
       <NewsletterSection />
     </>

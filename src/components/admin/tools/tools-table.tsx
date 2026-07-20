@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
+  Archive,
   Check,
   ExternalLink,
   Loader2,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import { approveToolSubmission, publishTool } from "@/actions/admin/moderation";
 import {
+  archiveAdminTool,
   toggleAdminToolFeatured,
   toggleAdminToolVerified,
 } from "@/actions/admin/tools";
@@ -86,10 +88,12 @@ function ToolRowActions({ tool }: { tool: AdminToolListItem }) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const isPendingSubmission = tool.status === "PENDING";
+  const isArchived = tool.status === "ARCHIVED";
   const canPublish =
-    tool.status === "PENDING" ||
     tool.status === "DRAFT" ||
-    tool.status === "REJECTED";
+    tool.status === "REJECTED" ||
+    tool.status === "ARCHIVED";
+  const canArchive = !isArchived;
 
   function runAction(action: () => Promise<ActionResult<unknown>>) {
     setActionError(null);
@@ -160,6 +164,19 @@ function ToolRowActions({ tool }: { tool: AdminToolListItem }) {
                 >
                   <Check className="mr-2 h-4 w-4" />
                   Publish
+                </DropdownMenuItem>
+              </>
+            )}
+            {canArchive && (
+              <>
+                {!canPublish && !isPendingSubmission && (
+                  <DropdownMenuSeparator />
+                )}
+                <DropdownMenuItem
+                  onClick={() => runAction(() => archiveAdminTool(tool.id))}
+                >
+                  <Archive className="mr-2 h-4 w-4" />
+                  Archive
                 </DropdownMenuItem>
               </>
             )}

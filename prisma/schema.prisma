@@ -41,6 +41,37 @@ enum PaymentStatus {
   NOT_REQUIRED
   PENDING
   PAID
+  FAILED
+  CANCELLED
+}
+
+enum PaymentProvider {
+  PAYPAL
+}
+
+enum GatewayPaymentStatus {
+  CREATED
+  APPROVED
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethodType {
+  PAYPAL
+  CARD
+}
+
+enum PromotionPlan {
+  HOMEPAGE_SPONSOR
+  FEATURED_LISTING
+}
+
+enum PromotionStatus {
+  PENDING_PAYMENT
+  PAID
+  FAILED
   CANCELLED
 }
 
@@ -190,6 +221,7 @@ model Tool {
   reviews     Review[]
   bookmarks   Bookmark[]
   tags        ToolTag[]
+  payments    Payment[]
 
   @@index([slug])
   @@index([name])
@@ -211,6 +243,76 @@ model Tool {
   @@index([status, featured, createdAt(sort: Desc)])
   @@index([views(sort: Desc)])
   @@index([createdAt(sort: Desc)])
+}
+
+model Payment {
+  id                String               @id @default(cuid())
+  submissionId      String
+  toolId            String?
+  promotionId       String?
+  provider          PaymentProvider      @default(PAYPAL)
+  providerOrderId   String?              @unique
+  providerCaptureId String?
+  amount            Decimal              @db.Decimal(10, 2)
+  currency          String               @default("USD") @db.VarChar(3)
+  status            GatewayPaymentStatus @default(CREATED)
+  paymentMethod     PaymentMethodType?
+  payerEmail        String?              @db.VarChar(255)
+  payerName         String?              @db.VarChar(255)
+  country           String?              @db.VarChar(2)
+  gatewayResponse   Json?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  paidAt            DateTime?
+  refundAt          DateTime?
+
+  tool      Tool?       @relation(fields: [toolId], references: [id], onDelete: SetNull)
+  promotion Promotion?  @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+  events    PaymentEvent[]
+
+  @@index([submissionId])
+  @@index([toolId])
+  @@index([promotionId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@index([provider, status])
+  @@index([paidAt])
+}
+
+model PaymentEvent {
+  id        String   @id @default(cuid())
+  paymentId String
+  type      String   @db.VarChar(64)
+  message   String?  @db.Text
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@index([paymentId, createdAt(sort: Desc)])
+  @@index([type])
+}
+
+model Promotion {
+  id           String          @id @default(cuid())
+  referenceId  String          @unique
+  plan         PromotionPlan
+  contactEmail String          @db.VarChar(255)
+  toolUrl      String          @db.VarChar(500)
+  status       PromotionStatus @default(PENDING_PAYMENT)
+  amount       Decimal         @db.Decimal(10, 2)
+  currency     String          @default("USD") @db.VarChar(3)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  paidAt       DateTime?
+
+  payments Payment[]
+
+  @@index([status])
+  @@index([plan])
+  @@index([contactEmail])
+  @@index([createdAt(sort: Desc)])
+  @@index([paidAt])
 }
 
 model ToolTag {

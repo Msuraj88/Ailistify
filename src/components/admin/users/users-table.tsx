@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -71,12 +72,23 @@ export function UsersTable({ users }: UsersTableProps) {
             <TableRow key={user.id}>
               <TableCell>
                 <div className="min-w-0">
-                  <p className="truncate font-medium">
+                  <Link
+                    href={`/admin/users/${user.id}`}
+                    className="truncate font-medium hover:text-primary"
+                  >
                     {user.name?.trim() || "—"}
-                  </p>
+                  </Link>
                   <p className="truncate text-sm text-muted-foreground">
                     {user.email}
                   </p>
+                  {user.isFounder && (
+                    <Link
+                      href={`/admin/users/${user.id}`}
+                      className="mt-1 inline-block text-xs font-medium text-primary hover:underline"
+                    >
+                      View founder profile
+                    </Link>
+                  )}
                 </div>
               </TableCell>
               <TableCell>
@@ -84,12 +96,14 @@ export function UsersTable({ users }: UsersTableProps) {
               </TableCell>
               <TableCell>
                 {user.isFounder ? (
-                  <Badge
-                    variant="outline"
-                    className="border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400"
-                  >
-                    Founder
-                  </Badge>
+                  <Link href={`/admin/users/${user.id}`}>
+                    <Badge
+                      variant="outline"
+                      className="border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                    >
+                      Founder
+                    </Badge>
+                  </Link>
                 ) : (
                   <span className="text-sm text-muted-foreground">User</span>
                 )}

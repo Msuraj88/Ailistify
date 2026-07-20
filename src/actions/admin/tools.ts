@@ -347,6 +347,53 @@ export async function updateAdminTool(
   }
 }
 
+export async function archiveAdminTool(
+  id: string,
+): Promise<ActionResult<{ id: string; status: ToolStatus }>> {
+  const authResult = await requireAdminAction();
+  if (!authResult.success) {
+    return authResult;
+  }
+
+  try {
+    const existing = await prisma.tool.findUnique({
+      where: { id },
+      select: { id: true, status: true, slug: true },
+    });
+
+    if (!existing) {
+      return { success: false, error: "Tool not found." };
+    }
+
+    if (existing.status === ToolStatus.ARCHIVED) {
+      return { success: false, error: "Tool is already archived." };
+    }
+
+    const updated = await prisma.tool.update({
+      where: { id },
+      data: {
+        status: ToolStatus.ARCHIVED,
+        featured: false,
+      },
+      select: { id: true, status: true, slug: true },
+    });
+
+    revalidateToolPaths();
+    revalidatePath(`/admin/tools/${id}/edit`);
+    revalidatePath(`/tools/${updated.slug}`);
+
+    return {
+      success: true,
+      data: { id: updated.id, status: updated.status },
+    };
+  } catch {
+    return {
+      success: false,
+      error: "Failed to archive tool. Please try again later.",
+    };
+  }
+}
+
 export async function deleteAdminTool(
   id: string,
 ): Promise<ActionResult<{ id: string }>> {

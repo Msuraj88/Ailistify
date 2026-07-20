@@ -11,6 +11,7 @@ export type PromoteStat = {
 
 export type PromotePackage = {
   id: string;
+  plan: "HOMEPAGE_SPONSOR" | "FEATURED_LISTING";
   icon: LucideIcon;
   title: string;
   description: string;
@@ -22,7 +23,6 @@ export type PromotePackage = {
   previewImage: string;
   previewAlt: string;
   ctaLabel: string;
-  paymentUrl: string;
 };
 
 export type PromoteFaq = {
@@ -78,7 +78,7 @@ export const promotePackages: PromotePackage[] = [
     previewImage: "/sponsor.png",
     previewAlt: "Preview of the homepage sponsor chip placement",
     ctaLabel: "Reserve Your Spot",
-    paymentUrl: "https://www.paypal.com/ncp/payment/9R9UKC2UR6LF6",
+    plan: "HOMEPAGE_SPONSOR",
   },
   {
     id: "featured-listing",
@@ -100,9 +100,15 @@ export const promotePackages: PromotePackage[] = [
     previewImage: "/featured.png",
     previewAlt: "Preview of a featured tool card placement",
     ctaLabel: "Get Featured",
-    paymentUrl: "https://www.paypal.com/ncp/payment/TU38MXUMEQ2B4",
+    plan: "FEATURED_LISTING",
   },
 ];
+
+export function getPromotePackageByPlan(
+  plan: PromotePackage["plan"],
+): PromotePackage | undefined {
+  return promotePackages.find((pkg) => pkg.plan === plan);
+}
 
 export const promoteFaqs: PromoteFaq[] = [
   {

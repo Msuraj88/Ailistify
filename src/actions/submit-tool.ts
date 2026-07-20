@@ -402,68 +402,20 @@ export async function upgradeMyToolListing(
   toolId: string,
   listingPlan: "PRIORITY" | "FEATURED",
 ): Promise<ActionResult<{ toolId: string; paymentUrl: string }>> {
-  const session = await auth();
+  const { startToolCheckout } = await import("@/actions/payments");
+  const result = await startToolCheckout(toolId, listingPlan);
 
-  if (!session?.user) {
-    return { success: false, error: "You must be signed in." };
+  if (!result.success) {
+    return result;
   }
 
-  const paymentUrls = {
-    PRIORITY: "https://www.paypal.com/ncp/payment/BVGDD56RKYSZ8",
-    FEATURED: "https://www.paypal.com/ncp/payment/TU38MXUMEQ2B4",
-  } as const;
-
-  try {
-    const tool = await prisma.tool.findFirst({
-      where: {
-        id: toolId,
-        submittedById: session.user.id,
-      },
-      select: { id: true, status: true },
-    });
-
-    if (!tool) {
-      return { success: false, error: "Tool submission not found." };
-    }
-
-    if (
-      tool.status !== ToolStatus.PENDING &&
-      tool.status !== ToolStatus.REJECTED &&
-      tool.status !== ToolStatus.DRAFT
-    ) {
-      return {
-        success: false,
-        error: "Only queued submissions can be upgraded.",
-      };
-    }
-
-    await prisma.tool.update({
-      where: { id: toolId },
-      data: {
-        listingPlan:
-          listingPlan === "FEATURED"
-            ? ListingPlan.FEATURED
-            : ListingPlan.PRIORITY,
-        paymentStatus: PaymentStatus.PENDING,
-        status: ToolStatus.PENDING,
-      },
-    });
-
-    revalidateSubmissionPaths();
-
-    return {
-      success: true,
-      data: {
-        toolId,
-        paymentUrl: paymentUrls[listingPlan],
-      },
-    };
-  } catch {
-    return {
-      success: false,
-      error: "Failed to start premium upgrade. Please try again.",
-    };
-  }
+  return {
+    success: true,
+    data: {
+      toolId,
+      paymentUrl: result.data.approvalUrl,
+    },
+  };
 }
 
 export async function finalizePaidSubmission(input: {
@@ -476,49 +428,28 @@ export async function finalizePaidSubmission(input: {
     return { success: false, error: "You must be signed in." };
   }
 
-  const tool = await prisma.tool.findUnique({
-    where: { id: input.toolId },
-    select: {
-      id: true,
-      submittedById: true,
-      listingPlan: true,
-      paymentStatus: true,
-      submissionId: true,
-    },
-  });
+  try {
+    const { PaymentService } =
+      await import("@/lib/payments/services/payment-service");
+    const result = await PaymentService.captureCheckout(input.orderId);
 
-  if (!tool || tool.submittedById !== session.user.id) {
-    return { success: false, error: "Submission not found." };
-  }
+    if (result.toolId && result.toolId !== input.toolId) {
+      return { success: false, error: "Order does not match this submission." };
+    }
 
-  if (tool.paymentStatus === PaymentStatus.PAID) {
+    revalidateSubmissionPaths();
+
     return {
       success: true,
-      data: { submissionId: tool.submissionId! },
+      data: { submissionId: result.submissionId },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to finalize payment.",
     };
   }
-
-  const featuredUntil =
-    tool.listingPlan === ListingPlan.FEATURED
-      ? new Date(Date.now() + 28 * 24 * 60 * 60 * 1000)
-      : null;
-
-  await prisma.tool.update({
-    where: { id: tool.id },
-    data: {
-      paymentStatus: PaymentStatus.PAID,
-      paypalOrderId: input.orderId,
-      featured: tool.listingPlan === ListingPlan.FEATURED,
-      featuredUntil,
-    },
-  });
-
-  revalidateSubmissionPaths();
-
-  return {
-    success: true,
-    data: { submissionId: tool.submissionId! },
-  };
 }
 
 export async function getSubmissionSummary(submissionId: string) {
