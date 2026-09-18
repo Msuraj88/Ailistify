@@ -13,13 +13,15 @@ import {
   buildPaymentReturnUrl,
   buildPromotionCancelUrl,
   buildPromotionReturnUrl,
+  getDodoProductIdForListingPlan,
+  getDodoProductIdForPromotePlan,
   getPlanAmount,
   getPlanLabel,
   getPromotePlanAmount,
   getPromotePlanLabel,
-  isPayPalConfigured,
+  isDodoConfigured,
 } from "@/lib/payments/config";
-import { paypalProvider } from "@/lib/payments/providers/paypal";
+import { dodoProvider } from "@/lib/payments/providers/dodo";
 import type {
   CaptureCheckoutResult,
   CreateCheckoutResult,
@@ -27,6 +29,7 @@ import type {
   PaymentEventType,
   PaymentProvider as PaymentProviderAdapter,
   PromotePlan,
+  ProviderPayment,
 } from "@/lib/payments/types";
 import { prisma } from "@/lib/prisma";
 import { generatePromotionReferenceId } from "@/lib/promotion/id";
@@ -37,10 +40,10 @@ import {
 } from "@/lib/email/payments";
 
 const providers: Record<string, PaymentProviderAdapter> = {
-  paypal: paypalProvider,
+  dodo: dodoProvider,
 };
 
-function getProvider(id: string = "paypal"): PaymentProviderAdapter {
+function getProvider(id: string = "dodo"): PaymentProviderAdapter {
   const provider = providers[id];
   if (!provider) {
     throw new Error(`Payment provider "${id}" is not registered.`);
@@ -91,9 +94,251 @@ async function markToolPaid(input: {
   });
 }
 
+function isSucceededStatus(status: string): boolean {
+  return status.toLowerCase() === "succeeded";
+}
+
+async function findPaymentForProviderPayment(providerPayment: ProviderPayment) {
+  const internalPaymentId = providerPayment.metadata.internalPaymentId;
+  if (internalPaymentId) {
+    const byId = await prisma.payment.findUnique({
+      where: { id: internalPaymentId },
+      include: {
+        tool: {
+          select: {
+            id: true,
+            name: true,
+            listingPlan: true,
+            submitterEmail: true,
+            submittedBy: { select: { email: true } },
+          },
+        },
+        promotion: {
+          select: {
+            id: true,
+            referenceId: true,
+            plan: true,
+            contactEmail: true,
+            toolUrl: true,
+            status: true,
+          },
+        },
+      },
+    });
+    if (byId) return byId;
+  }
+
+  const sessionId = (
+    providerPayment.raw as { checkout_session_id?: string | null }
+  )?.checkout_session_id;
+
+  if (sessionId) {
+    const bySession = await prisma.payment.findUnique({
+      where: { providerOrderId: sessionId },
+      include: {
+        tool: {
+          select: {
+            id: true,
+            name: true,
+            listingPlan: true,
+            submitterEmail: true,
+            submittedBy: { select: { email: true } },
+          },
+        },
+        promotion: {
+          select: {
+            id: true,
+            referenceId: true,
+            plan: true,
+            contactEmail: true,
+            toolUrl: true,
+            status: true,
+          },
+        },
+      },
+    });
+    if (bySession) return bySession;
+  }
+
+  const submissionId = providerPayment.metadata.submissionId;
+  if (submissionId) {
+    return prisma.payment.findFirst({
+      where: {
+        submissionId,
+        status: {
+          in: [GatewayPaymentStatus.CREATED, GatewayPaymentStatus.APPROVED],
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        tool: {
+          select: {
+            id: true,
+            name: true,
+            listingPlan: true,
+            submitterEmail: true,
+            submittedBy: { select: { email: true } },
+          },
+        },
+        promotion: {
+          select: {
+            id: true,
+            referenceId: true,
+            plan: true,
+            contactEmail: true,
+            toolUrl: true,
+            status: true,
+          },
+        },
+      },
+    });
+  }
+
+  return null;
+}
+
+async function finalizePaidPayment(
+  payment: NonNullable<
+    Awaited<ReturnType<typeof findPaymentForProviderPayment>>
+  >,
+  providerPayment: ProviderPayment,
+): Promise<CaptureCheckoutResult> {
+  if (payment.status === GatewayPaymentStatus.PAID) {
+    return {
+      paymentId: payment.id,
+      submissionId: payment.submissionId,
+      toolId: payment.toolId,
+      promotionId: payment.promotionId,
+      providerOrderId: payment.providerOrderId!,
+      providerCaptureId: payment.providerCaptureId,
+      amount: toNumber(payment.amount),
+      currency: payment.currency,
+      status: "PAID",
+      payerEmail: payment.payerEmail,
+      payerName: payment.payerName,
+      country: payment.country,
+      alreadyCaptured: true,
+    };
+  }
+
+  if (!isSucceededStatus(providerPayment.status)) {
+    throw new Error(
+      `Dodo payment status was ${providerPayment.status}, expected succeeded.`,
+    );
+  }
+
+  const expectedAmount = toNumber(payment.amount);
+  const expectedFromMeta = Number(providerPayment.metadata.expectedAmount);
+  const compareAgainst = Number.isFinite(expectedFromMeta)
+    ? expectedFromMeta
+    : expectedAmount;
+
+  // Allow tax/FX variance while still catching wrong product checkouts.
+  if (
+    compareAgainst > 0 &&
+    Math.abs(providerPayment.amount - compareAgainst) >
+      Math.max(1, compareAgainst * 0.35)
+  ) {
+    await recordEvent(
+      payment.id,
+      "PAYMENT_FAILED",
+      `Amount mismatch. Expected ~${compareAgainst} ${payment.currency}, got ${providerPayment.amount} ${providerPayment.currency}`,
+      providerPayment.raw,
+    );
+    throw new Error("Payment amount could not be verified.");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.payment.update({
+      where: { id: payment.id },
+      data: {
+        status: GatewayPaymentStatus.PAID,
+        providerCaptureId: providerPayment.providerPaymentId,
+        payerEmail: providerPayment.payerEmail ?? payment.payerEmail,
+        payerName: providerPayment.payerName,
+        country: providerPayment.country,
+        paymentMethod: PaymentMethodType.DODO,
+        gatewayResponse: providerPayment.raw as Prisma.InputJsonValue,
+        paidAt: new Date(),
+      },
+    });
+
+    if (payment.toolId && payment.tool) {
+      const featuredUntil =
+        payment.tool.listingPlan === ListingPlan.FEATURED
+          ? new Date(Date.now() + 28 * 24 * 60 * 60 * 1000)
+          : null;
+
+      await tx.tool.update({
+        where: { id: payment.toolId },
+        data: {
+          paymentStatus: PaymentStatus.PAID,
+          paypalOrderId:
+            payment.providerOrderId ?? providerPayment.providerPaymentId,
+          featured: payment.tool.listingPlan === ListingPlan.FEATURED,
+          featuredUntil,
+          status: "PENDING",
+        },
+      });
+    }
+
+    if (payment.promotionId) {
+      await tx.promotion.update({
+        where: { id: payment.promotionId },
+        data: {
+          status: PromotionStatus.PAID,
+          paidAt: new Date(),
+        },
+      });
+    }
+
+    await tx.paymentEvent.create({
+      data: {
+        paymentId: payment.id,
+        type: "PAYMENT_CAPTURED",
+        message: "Dodo payment completed successfully",
+        payload: providerPayment.raw as Prisma.InputJsonValue,
+      },
+    });
+  });
+
+  const email =
+    providerPayment.payerEmail ??
+    payment.tool?.submitterEmail ??
+    payment.tool?.submittedBy?.email;
+
+  if (email && payment.tool) {
+    await sendPaymentSuccessEmail({
+      submitterEmail: email,
+      toolName: payment.tool.name,
+      submissionId: payment.submissionId,
+      listingPlan: payment.tool.listingPlan,
+      amount: expectedAmount,
+      currency: payment.currency,
+      paymentId: payment.id,
+    }).catch(() => undefined);
+  }
+
+  return {
+    paymentId: payment.id,
+    submissionId: payment.submissionId,
+    toolId: payment.toolId,
+    promotionId: payment.promotionId,
+    providerOrderId: payment.providerOrderId!,
+    providerCaptureId: providerPayment.providerPaymentId,
+    amount: expectedAmount,
+    currency: payment.currency,
+    status: "PAID",
+    payerEmail: providerPayment.payerEmail,
+    payerName: providerPayment.payerName,
+    country: providerPayment.country,
+    alreadyCaptured: false,
+  };
+}
+
 export const PaymentService = {
   isConfigured() {
-    return isPayPalConfigured();
+    return isDodoConfigured();
   },
 
   async createCheckout(input: {
@@ -101,7 +346,7 @@ export const PaymentService = {
     listingPlan: PaidListingPlan;
     provider?: string;
   }): Promise<CreateCheckoutResult> {
-    const provider = getProvider(input.provider ?? "paypal");
+    const provider = getProvider(input.provider ?? "dodo");
 
     const tool = await prisma.tool.findUnique({
       where: { id: input.toolId },
@@ -112,7 +357,7 @@ export const PaymentService = {
         paymentStatus: true,
         listingPlan: true,
         submitterEmail: true,
-        submittedBy: { select: { email: true } },
+        submittedBy: { select: { email: true, name: true } },
       },
     });
 
@@ -126,98 +371,89 @@ export const PaymentService = {
 
     const amount = getPlanAmount(input.listingPlan);
     const description = `AIListify ${getPlanLabel(input.listingPlan)} — ${tool.name}`;
+    const productId = getDodoProductIdForListingPlan(input.listingPlan);
+    const payerEmail = tool.submitterEmail ?? tool.submittedBy?.email ?? null;
 
-    // Prevent duplicate open checkouts for the same submission + plan.
-    const existingOpen = await prisma.payment.findFirst({
-      where: {
+    const paymentDraft = await prisma.payment.create({
+      data: {
+        submissionId: tool.submissionId,
+        toolId: tool.id,
+        provider: PaymentProvider.DODO,
+        amount,
+        currency: "USD",
+        status: GatewayPaymentStatus.CREATED,
+        paymentMethod: PaymentMethodType.DODO,
+        payerEmail,
+      },
+    });
+
+    try {
+      const created = await provider.createCheckoutSession({
         toolId: tool.id,
         submissionId: tool.submissionId,
-        status: {
-          in: [GatewayPaymentStatus.CREATED, GatewayPaymentStatus.APPROVED],
-        },
+        productId,
         amount,
-      },
-      orderBy: { createdAt: "desc" },
-    });
+        currency: "USD",
+        description,
+        returnUrl: buildPaymentReturnUrl(tool.submissionId),
+        cancelUrl: buildPaymentCancelUrl(tool.submissionId),
+        payerEmail,
+        payerName: tool.submittedBy?.name ?? null,
+        metadata: {
+          internalPaymentId: paymentDraft.id,
+          kind: "tool_listing",
+          listingPlan: input.listingPlan,
+        },
+      });
 
-    if (existingOpen?.providerOrderId) {
-      const order = await provider.getOrder(existingOpen.providerOrderId);
-      const approval =
-        (
-          order.raw as { links?: Array<{ rel?: string; href?: string }> }
-        )?.links?.find(
-          (link) => link.rel === "approve" || link.rel === "payer-action",
-        )?.href ?? null;
+      await prisma.$transaction(async (tx) => {
+        await tx.payment.update({
+          where: { id: paymentDraft.id },
+          data: {
+            providerOrderId: created.providerOrderId,
+            gatewayResponse: created.raw as Prisma.InputJsonValue,
+          },
+        });
 
-      if (
-        approval &&
-        order.status !== "COMPLETED" &&
-        order.status !== "VOIDED"
-      ) {
-        return {
-          paymentId: existingOpen.id,
-          providerOrderId: existingOpen.providerOrderId,
-          approvalUrl: approval,
-        };
-      }
+        await tx.tool.update({
+          where: { id: tool.id },
+          data: {
+            listingPlan:
+              input.listingPlan === "FEATURED"
+                ? ListingPlan.FEATURED
+                : ListingPlan.PRIORITY,
+            paymentStatus: PaymentStatus.PENDING,
+            paypalOrderId: created.providerOrderId,
+          },
+        });
+
+        await tx.paymentEvent.create({
+          data: {
+            paymentId: paymentDraft.id,
+            type: "PAYMENT_STARTED",
+            message: "Dodo checkout session created",
+            payload: created.raw as Prisma.InputJsonValue,
+          },
+        });
+      });
+
+      return {
+        paymentId: paymentDraft.id,
+        providerOrderId: created.providerOrderId,
+        approvalUrl: created.approvalUrl,
+      };
+    } catch (error) {
+      await prisma.payment.update({
+        where: { id: paymentDraft.id },
+        data: {
+          status: GatewayPaymentStatus.FAILED,
+          gatewayResponse: {
+            error: error instanceof Error ? error.message : "checkout_failed",
+          } as Prisma.InputJsonValue,
+        },
+      });
+      throw error;
     }
-
-    const created = await provider.createOrder({
-      toolId: tool.id,
-      submissionId: tool.submissionId,
-      listingPlan: input.listingPlan,
-      amount,
-      currency: "USD",
-      description,
-      returnUrl: buildPaymentReturnUrl(tool.submissionId),
-      cancelUrl: buildPaymentCancelUrl(tool.submissionId),
-      payerEmail: tool.submitterEmail ?? tool.submittedBy?.email,
-    });
-
-    const payment = await prisma.$transaction(async (tx) => {
-      const row = await tx.payment.create({
-        data: {
-          submissionId: tool.submissionId!,
-          toolId: tool.id,
-          provider: PaymentProvider.PAYPAL,
-          providerOrderId: created.providerOrderId,
-          amount,
-          currency: "USD",
-          status: GatewayPaymentStatus.CREATED,
-          paymentMethod: PaymentMethodType.PAYPAL,
-          gatewayResponse: created.raw as Prisma.InputJsonValue,
-        },
-      });
-
-      await tx.tool.update({
-        where: { id: tool.id },
-        data: {
-          listingPlan:
-            input.listingPlan === "FEATURED"
-              ? ListingPlan.FEATURED
-              : ListingPlan.PRIORITY,
-          paymentStatus: PaymentStatus.PENDING,
-          paypalOrderId: created.providerOrderId,
-        },
-      });
-
-      await tx.paymentEvent.create({
-        data: {
-          paymentId: row.id,
-          type: "PAYMENT_STARTED",
-          message: "PayPal checkout started",
-          payload: created.raw as Prisma.InputJsonValue,
-        },
-      });
-
-      return row;
-    });
-
-    return {
-      paymentId: payment.id,
-      providerOrderId: created.providerOrderId,
-      approvalUrl: created.approvalUrl,
-    };
   },
 
   async createPromotionCheckout(input: {
@@ -228,25 +464,15 @@ export const PaymentService = {
   }): Promise<
     CreateCheckoutResult & { promotionId: string; referenceId: string }
   > {
-    const provider = getProvider(input.provider ?? "paypal");
+    const provider = getProvider(input.provider ?? "dodo");
     const amount = getPromotePlanAmount(input.plan);
     const planLabel = getPromotePlanLabel(input.plan);
     const referenceId = await generatePromotionReferenceId();
-
+    const productId = getDodoProductIdForPromotePlan(input.plan);
     const description = `AIListify ${planLabel} — ${input.toolUrl}`.slice(
       0,
       127,
     );
-
-    const created = await provider.createOrder({
-      submissionId: referenceId,
-      amount,
-      currency: "USD",
-      description,
-      returnUrl: buildPromotionReturnUrl(referenceId),
-      cancelUrl: buildPromotionCancelUrl(referenceId),
-      payerEmail: input.contactEmail,
-    });
 
     const { payment, promotion } = await prisma.$transaction(async (tx) => {
       const promotionRow = await tx.promotion.create({
@@ -265,97 +491,62 @@ export const PaymentService = {
         data: {
           submissionId: referenceId,
           promotionId: promotionRow.id,
-          provider: PaymentProvider.PAYPAL,
-          providerOrderId: created.providerOrderId,
+          provider: PaymentProvider.DODO,
           amount,
           currency: "USD",
           status: GatewayPaymentStatus.CREATED,
-          paymentMethod: PaymentMethodType.PAYPAL,
+          paymentMethod: PaymentMethodType.DODO,
           payerEmail: input.contactEmail,
-          gatewayResponse: created.raw as Prisma.InputJsonValue,
-        },
-      });
-
-      await tx.paymentEvent.create({
-        data: {
-          paymentId: paymentRow.id,
-          type: "PAYMENT_STARTED",
-          message: "Promotion PayPal checkout started",
-          payload: created.raw as Prisma.InputJsonValue,
         },
       });
 
       return { payment: paymentRow, promotion: promotionRow };
     });
 
-    return {
-      paymentId: payment.id,
-      providerOrderId: created.providerOrderId,
-      approvalUrl: created.approvalUrl,
-      promotionId: promotion.id,
-      referenceId,
-    };
-  },
-
-  async captureCheckout(
-    providerOrderId: string,
-  ): Promise<CaptureCheckoutResult> {
-    const provider = getProvider("paypal");
-
-    const payment = await prisma.payment.findUnique({
-      where: { providerOrderId },
-      include: {
-        tool: {
-          select: {
-            id: true,
-            name: true,
-            listingPlan: true,
-            paymentStatus: true,
-            submissionId: true,
-            submitterEmail: true,
-            submittedBy: { select: { email: true } },
-          },
+    try {
+      const created = await provider.createCheckoutSession({
+        submissionId: referenceId,
+        productId,
+        amount,
+        currency: "USD",
+        description,
+        returnUrl: buildPromotionReturnUrl(referenceId),
+        cancelUrl: buildPromotionCancelUrl(referenceId),
+        payerEmail: input.contactEmail,
+        metadata: {
+          internalPaymentId: payment.id,
+          kind: "promotion",
+          promotionPlan: input.plan,
+          toolUrl: input.toolUrl,
         },
-        promotion: {
-          select: {
-            id: true,
-            referenceId: true,
-            plan: true,
-            contactEmail: true,
-            toolUrl: true,
-            status: true,
+      });
+
+      await prisma.$transaction(async (tx) => {
+        await tx.payment.update({
+          where: { id: payment.id },
+          data: {
+            providerOrderId: created.providerOrderId,
+            gatewayResponse: created.raw as Prisma.InputJsonValue,
           },
-        },
-      },
-    });
+        });
 
-    if (!payment) {
-      throw new Error("Payment record not found for this PayPal order.");
-    }
+        await tx.paymentEvent.create({
+          data: {
+            paymentId: payment.id,
+            type: "PAYMENT_STARTED",
+            message: "Promotion Dodo checkout session created",
+            payload: created.raw as Prisma.InputJsonValue,
+          },
+        });
+      });
 
-    if (payment.status === GatewayPaymentStatus.PAID) {
       return {
         paymentId: payment.id,
-        submissionId: payment.submissionId,
-        toolId: payment.toolId,
-        promotionId: payment.promotionId,
-        providerOrderId: payment.providerOrderId!,
-        providerCaptureId: payment.providerCaptureId,
-        amount: toNumber(payment.amount),
-        currency: payment.currency,
-        status: "PAID",
-        payerEmail: payment.payerEmail,
-        payerName: payment.payerName,
-        country: payment.country,
-        alreadyCaptured: true,
+        providerOrderId: created.providerOrderId,
+        approvalUrl: created.approvalUrl,
+        promotionId: promotion.id,
+        referenceId,
       };
-    }
-
-    const expectedAmount = toNumber(payment.amount);
-    let capture;
-
-    try {
-      capture = await provider.captureOrder(providerOrderId);
     } catch (error) {
       await prisma.$transaction(async (tx) => {
         await tx.payment.update({
@@ -363,161 +554,91 @@ export const PaymentService = {
           data: {
             status: GatewayPaymentStatus.FAILED,
             gatewayResponse: {
-              error: error instanceof Error ? error.message : "capture_failed",
+              error: error instanceof Error ? error.message : "checkout_failed",
             } as Prisma.InputJsonValue,
           },
         });
-        if (payment.toolId) {
-          await tx.tool.update({
-            where: { id: payment.toolId },
-            data: { paymentStatus: PaymentStatus.FAILED },
-          });
-        }
-        if (payment.promotionId) {
-          await tx.promotion.update({
-            where: { id: payment.promotionId },
-            data: { status: PromotionStatus.FAILED },
-          });
-        }
-        await tx.paymentEvent.create({
-          data: {
-            paymentId: payment.id,
-            type: "PAYMENT_FAILED",
-            message: error instanceof Error ? error.message : "Capture failed",
-          },
+        await tx.promotion.update({
+          where: { id: promotion.id },
+          data: { status: PromotionStatus.FAILED },
         });
       });
-
-      const email =
-        payment.tool?.submitterEmail ??
-        payment.tool?.submittedBy?.email ??
-        payment.promotion?.contactEmail ??
-        payment.payerEmail;
-      if (email && payment.tool) {
-        await sendPaymentFailedEmail({
-          submitterEmail: email,
-          toolName: payment.tool.name,
-          submissionId: payment.submissionId,
-          reason: error instanceof Error ? error.message : "Payment failed",
-        }).catch(() => undefined);
-      }
-
       throw error;
     }
+  },
 
-    const capturedOk =
-      capture.status === "COMPLETED" ||
-      capture.status === "PENDING" ||
-      capture.status === "APPROVED";
+  /**
+   * Complete a Dodo payment after return URL or webhook using the Dodo payment_id.
+   */
+  async completeCheckout(
+    providerPaymentId: string,
+  ): Promise<CaptureCheckoutResult> {
+    const provider = getProvider("dodo");
+    const providerPayment = await provider.getPayment(providerPaymentId);
+    const payment = await findPaymentForProviderPayment(providerPayment);
 
-    if (!capturedOk) {
-      await recordEvent(
-        payment.id,
-        "PAYMENT_FAILED",
-        `Unexpected capture status: ${capture.status}`,
-        capture.raw,
-      );
-      throw new Error(`PayPal capture status was ${capture.status}.`);
+    if (!payment) {
+      throw new Error("Payment record not found for this Dodo payment.");
     }
 
-    if (
-      Math.abs(capture.amount - expectedAmount) > 0.01 ||
-      capture.currency.toUpperCase() !== payment.currency.toUpperCase()
-    ) {
-      await recordEvent(
-        payment.id,
-        "PAYMENT_FAILED",
-        `Amount/currency mismatch. Expected ${expectedAmount} ${payment.currency}, got ${capture.amount} ${capture.currency}`,
-        capture.raw,
-      );
-      throw new Error("Payment amount or currency could not be verified.");
-    }
-
-    await prisma.$transaction(async (tx) => {
-      await tx.payment.update({
-        where: { id: payment.id },
-        data: {
-          status: GatewayPaymentStatus.PAID,
-          providerCaptureId: capture.providerCaptureId,
-          payerEmail: capture.payerEmail ?? payment.payerEmail,
-          payerName: capture.payerName,
-          country: capture.country,
-          paymentMethod: PaymentMethodType.PAYPAL,
-          gatewayResponse: capture.raw as Prisma.InputJsonValue,
-          paidAt: new Date(),
-        },
-      });
-
-      if (payment.toolId && payment.tool) {
-        const featuredUntil =
-          payment.tool.listingPlan === ListingPlan.FEATURED
-            ? new Date(Date.now() + 28 * 24 * 60 * 60 * 1000)
-            : null;
-
-        await tx.tool.update({
-          where: { id: payment.toolId },
-          data: {
-            paymentStatus: PaymentStatus.PAID,
-            paypalOrderId: capture.providerOrderId,
-            featured: payment.tool.listingPlan === ListingPlan.FEATURED,
-            featuredUntil,
-            status: "PENDING",
-          },
+    try {
+      return await finalizePaidPayment(payment, providerPayment);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.includes("expected succeeded")
+      ) {
+        await prisma.$transaction(async (tx) => {
+          await tx.payment.update({
+            where: { id: payment.id },
+            data: {
+              status: GatewayPaymentStatus.FAILED,
+              gatewayResponse: providerPayment.raw as Prisma.InputJsonValue,
+            },
+          });
+          if (payment.toolId) {
+            await tx.tool.update({
+              where: { id: payment.toolId },
+              data: { paymentStatus: PaymentStatus.FAILED },
+            });
+          }
+          if (payment.promotionId) {
+            await tx.promotion.update({
+              where: { id: payment.promotionId },
+              data: { status: PromotionStatus.FAILED },
+            });
+          }
+          await tx.paymentEvent.create({
+            data: {
+              paymentId: payment.id,
+              type: "PAYMENT_FAILED",
+              message: error.message,
+            },
+          });
         });
+
+        const email =
+          payment.tool?.submitterEmail ??
+          payment.tool?.submittedBy?.email ??
+          payment.payerEmail;
+        if (email && payment.tool) {
+          await sendPaymentFailedEmail({
+            submitterEmail: email,
+            toolName: payment.tool.name,
+            submissionId: payment.submissionId,
+            reason: error.message,
+          }).catch(() => undefined);
+        }
       }
-
-      if (payment.promotionId) {
-        await tx.promotion.update({
-          where: { id: payment.promotionId },
-          data: {
-            status: PromotionStatus.PAID,
-            paidAt: new Date(),
-          },
-        });
-      }
-
-      await tx.paymentEvent.create({
-        data: {
-          paymentId: payment.id,
-          type: "PAYMENT_CAPTURED",
-          message: "PayPal order captured successfully",
-          payload: capture.raw as Prisma.InputJsonValue,
-        },
-      });
-    });
-
-    const email =
-      capture.payerEmail ??
-      payment.tool?.submitterEmail ??
-      payment.tool?.submittedBy?.email;
-
-    if (email && payment.tool) {
-      await sendPaymentSuccessEmail({
-        submitterEmail: email,
-        toolName: payment.tool.name,
-        submissionId: payment.submissionId,
-        listingPlan: payment.tool.listingPlan,
-        amount: expectedAmount,
-        currency: payment.currency,
-        paymentId: payment.id,
-      }).catch(() => undefined);
+      throw error;
     }
+  },
 
-    return {
-      paymentId: payment.id,
-      submissionId: payment.submissionId,
-      toolId: payment.toolId,
-      promotionId: payment.promotionId,
-      providerOrderId: capture.providerOrderId,
-      providerCaptureId: capture.providerCaptureId,
-      amount: expectedAmount,
-      currency: payment.currency,
-      status: "PAID",
-      payerEmail: capture.payerEmail,
-      payerName: capture.payerName,
-      country: capture.country,
-      alreadyCaptured: false,
-    };
+  /** @deprecated Prefer completeCheckout — kept for call-site compatibility. */
+  async captureCheckout(
+    providerPaymentId: string,
+  ): Promise<CaptureCheckoutResult> {
+    return this.completeCheckout(providerPaymentId);
   },
 
   async markCancelled(submissionId: string) {
@@ -538,6 +659,7 @@ export const PaymentService = {
             submittedBy: { select: { email: true } },
           },
         },
+        promotion: { select: { id: true } },
       },
     });
 
@@ -554,6 +676,12 @@ export const PaymentService = {
         await tx.tool.update({
           where: { id: payment.toolId },
           data: { paymentStatus: PaymentStatus.CANCELLED },
+        });
+      }
+      if (payment.promotionId) {
+        await tx.promotion.update({
+          where: { id: payment.promotionId },
+          data: { status: PromotionStatus.CANCELLED },
         });
       }
       await tx.paymentEvent.create({
@@ -582,136 +710,91 @@ export const PaymentService = {
     eventType: string,
     resource: Record<string, unknown>,
   ) {
-    const orderId =
-      (resource.id as string | undefined) ??
-      ((resource.supplementary_data as { related_ids?: { order_id?: string } })
-        ?.related_ids?.order_id as string | undefined);
+    const paymentId =
+      (resource.payment_id as string | undefined) ??
+      (typeof resource.data === "object" &&
+      resource.data &&
+      "payment_id" in (resource.data as object)
+        ? String((resource.data as { payment_id?: string }).payment_id)
+        : undefined);
 
-    if (!orderId) {
+    if (!paymentId) {
       return { handled: false };
     }
 
-    const payment = await prisma.payment.findUnique({
-      where: { providerOrderId: orderId },
-    });
-
-    if (!payment) {
-      return { handled: false };
-    }
-
-    if (eventType === "CHECKOUT.ORDER.APPROVED") {
-      await prisma.payment.update({
-        where: { id: payment.id },
-        data: {
-          status:
-            payment.status === GatewayPaymentStatus.PAID
-              ? GatewayPaymentStatus.PAID
-              : GatewayPaymentStatus.APPROVED,
-          gatewayResponse: resource as Prisma.InputJsonValue,
-        },
-      });
-      await recordEvent(
-        payment.id,
-        "PAYMENT_APPROVED",
-        "PayPal order approved",
-        resource,
-      );
+    if (eventType === "payment.succeeded") {
+      await this.completeCheckout(paymentId);
       return { handled: true };
     }
 
-    if (eventType === "PAYMENT.CAPTURE.COMPLETED") {
-      if (payment.status !== GatewayPaymentStatus.PAID) {
-        await this.captureCheckout(orderId).catch(async () => {
-          // If capture already completed on PayPal, sync DB from webhook payload.
-          const captureId =
-            (resource.id as string | undefined) ?? payment.providerCaptureId;
-          await prisma.$transaction(async (tx) => {
-            await tx.payment.update({
-              where: { id: payment.id },
-              data: {
-                status: GatewayPaymentStatus.PAID,
-                providerCaptureId: captureId,
-                paidAt: new Date(),
-                gatewayResponse: resource as Prisma.InputJsonValue,
-              },
-            });
-            if (payment.toolId) {
-              const tool = await tx.tool.findUnique({
-                where: { id: payment.toolId },
-                select: { listingPlan: true },
-              });
-              if (tool) {
-                await markToolPaid({
-                  toolId: payment.toolId,
-                  providerOrderId: orderId,
-                  listingPlan: tool.listingPlan,
-                });
-              }
-            }
-            if (payment.promotionId) {
-              await tx.promotion.update({
-                where: { id: payment.promotionId },
-                data: {
-                  status: PromotionStatus.PAID,
-                  paidAt: new Date(),
-                },
-              });
-            }
-            await tx.paymentEvent.create({
-              data: {
-                paymentId: payment.id,
-                type: "PAYMENT_CAPTURED",
-                message: "Synced from PAYMENT.CAPTURE.COMPLETED webhook",
-                payload: resource as Prisma.InputJsonValue,
-              },
-            });
-          });
-        });
+    if (eventType === "payment.failed" || eventType === "payment.cancelled") {
+      const providerPayment = await getProvider("dodo").getPayment(paymentId);
+      const payment = await findPaymentForProviderPayment(providerPayment);
+      if (!payment || payment.status === GatewayPaymentStatus.PAID) {
+        return { handled: Boolean(payment) };
       }
-      return { handled: true };
-    }
 
-    if (eventType === "PAYMENT.CAPTURE.DENIED") {
       await prisma.$transaction(async (tx) => {
         await tx.payment.update({
           where: { id: payment.id },
           data: {
-            status: GatewayPaymentStatus.FAILED,
-            gatewayResponse: resource as Prisma.InputJsonValue,
+            status:
+              eventType === "payment.cancelled"
+                ? GatewayPaymentStatus.CANCELLED
+                : GatewayPaymentStatus.FAILED,
+            gatewayResponse: providerPayment.raw as Prisma.InputJsonValue,
           },
         });
         if (payment.toolId) {
           await tx.tool.update({
             where: { id: payment.toolId },
-            data: { paymentStatus: PaymentStatus.FAILED },
+            data: {
+              paymentStatus:
+                eventType === "payment.cancelled"
+                  ? PaymentStatus.CANCELLED
+                  : PaymentStatus.FAILED,
+            },
           });
         }
         if (payment.promotionId) {
           await tx.promotion.update({
             where: { id: payment.promotionId },
-            data: { status: PromotionStatus.FAILED },
+            data: {
+              status:
+                eventType === "payment.cancelled"
+                  ? PromotionStatus.CANCELLED
+                  : PromotionStatus.FAILED,
+            },
           });
         }
         await tx.paymentEvent.create({
           data: {
             paymentId: payment.id,
-            type: "PAYMENT_FAILED",
-            message: "Capture denied by PayPal",
-            payload: resource as Prisma.InputJsonValue,
+            type:
+              eventType === "payment.cancelled"
+                ? "PAYMENT_CANCELLED"
+                : "PAYMENT_FAILED",
+            message: `Synced from ${eventType}`,
+            payload: providerPayment.raw as Prisma.InputJsonValue,
           },
         });
       });
       return { handled: true };
     }
 
-    if (eventType === "PAYMENT.CAPTURE.REFUNDED") {
+    if (eventType === "refund.succeeded") {
+      const payment = await prisma.payment.findFirst({
+        where: { providerCaptureId: paymentId },
+      });
+      if (!payment) {
+        return { handled: false };
+      }
       await prisma.$transaction(async (tx) => {
         await tx.payment.update({
           where: { id: payment.id },
           data: {
             status: GatewayPaymentStatus.REFUNDED,
             refundAt: new Date(),
-            gatewayResponse: resource as Prisma.InputJsonValue,
           },
         });
         await tx.paymentEvent.create({

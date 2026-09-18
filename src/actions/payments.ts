@@ -108,7 +108,7 @@ export async function startToolCheckout(
       error:
         error instanceof Error
           ? error.message
-          : "Failed to start PayPal checkout.",
+          : "Failed to start Dodo checkout.",
     };
   }
 }
@@ -175,13 +175,13 @@ export async function adminMarkPaymentPaid(
   }
 }
 
-export async function createPromotionPayPalOrder(input: {
+export async function createPromotionCheckout(input: {
   plan: "HOMEPAGE_SPONSOR" | "FEATURED_LISTING";
   contactEmail: string;
   toolUrl: string;
 }): Promise<
   ActionResult<{
-    orderId: string;
+    checkoutUrl: string;
     paymentId: string;
     promotionId: string;
     referenceId: string;
@@ -208,7 +208,7 @@ export async function createPromotionPayPalOrder(input: {
     return {
       success: true,
       data: {
-        orderId: checkout.providerOrderId,
+        checkoutUrl: checkout.approvalUrl,
         paymentId: checkout.paymentId,
         promotionId: checkout.promotionId,
         referenceId: checkout.referenceId,
@@ -225,38 +225,11 @@ export async function createPromotionPayPalOrder(input: {
   }
 }
 
-export async function capturePromotionPayPalOrder(
-  providerOrderId: string,
-): Promise<
-  ActionResult<{
-    paymentId: string;
-    promotionId: string | null;
-    referenceId: string;
-  }>
-> {
-  if (!providerOrderId.trim()) {
-    return { success: false, error: "Missing PayPal order ID." };
-  }
-
-  try {
-    const result = await PaymentService.captureCheckout(providerOrderId.trim());
-    revalidatePath("/admin/payments");
-    revalidatePath("/promote");
-    return {
-      success: true,
-      data: {
-        paymentId: result.paymentId,
-        promotionId: result.promotionId,
-        referenceId: result.submissionId,
-      },
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to capture promotion payment.",
-    };
-  }
+/** @deprecated Use createPromotionCheckout */
+export async function createPromotionPayPalOrder(input: {
+  plan: "HOMEPAGE_SPONSOR" | "FEATURED_LISTING";
+  contactEmail: string;
+  toolUrl: string;
+}) {
+  return createPromotionCheckout(input);
 }

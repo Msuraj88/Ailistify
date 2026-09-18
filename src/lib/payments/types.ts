@@ -1,6 +1,6 @@
 import type { ListingPlan, PromotionPlan } from "@/generated/prisma/client";
 
-export type PaymentProviderId = "paypal";
+export type PaymentProviderId = "dodo";
 
 export type PaidListingPlan = Extract<ListingPlan, "PRIORITY" | "FEATURED">;
 
@@ -9,23 +9,21 @@ export type PromotePlan = PromotionPlan;
 export type CreateCheckoutInput = {
   toolId?: string;
   submissionId: string;
-  listingPlan?: PaidListingPlan;
+  productId: string;
   amount: number;
   currency?: string;
   description: string;
   returnUrl: string;
   cancelUrl: string;
   payerEmail?: string | null;
+  payerName?: string | null;
+  metadata?: Record<string, string>;
 };
 
 export type CreateCheckoutResult = {
   paymentId: string;
   providerOrderId: string;
   approvalUrl: string;
-};
-
-export type CaptureCheckoutInput = {
-  providerOrderId: string;
 };
 
 export type CaptureCheckoutResult = {
@@ -44,32 +42,30 @@ export type CaptureCheckoutResult = {
   alreadyCaptured: boolean;
 };
 
+export type ProviderPayment = {
+  providerPaymentId: string;
+  status: string;
+  amount: number;
+  currency: string;
+  payerEmail: string | null;
+  payerName: string | null;
+  country: string | null;
+  metadata: Record<string, string>;
+  raw: unknown;
+};
+
 export type PaymentProvider = {
   id: PaymentProviderId;
-  createOrder(input: CreateCheckoutInput): Promise<{
+  createCheckoutSession(input: CreateCheckoutInput): Promise<{
     providerOrderId: string;
     approvalUrl: string;
     raw: unknown;
   }>;
-  captureOrder(providerOrderId: string): Promise<{
-    providerOrderId: string;
-    providerCaptureId: string | null;
-    status: string;
-    amount: number;
-    currency: string;
-    payerEmail: string | null;
-    payerName: string | null;
-    country: string | null;
-    raw: unknown;
-  }>;
-  getOrder(providerOrderId: string): Promise<{
-    providerOrderId: string;
-    status: string;
-    amount: number | null;
-    currency: string | null;
-    raw: unknown;
-  }>;
-  verifyWebhook?(headers: Headers, body: string): Promise<boolean>;
+  getPayment(providerPaymentId: string): Promise<ProviderPayment>;
+  verifyAndParseWebhook?(
+    headers: Headers,
+    body: string,
+  ): Promise<{ ok: boolean; eventType?: string; data?: unknown }>;
 };
 
 export type PaymentEventType =

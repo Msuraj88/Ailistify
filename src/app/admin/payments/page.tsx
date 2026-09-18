@@ -14,7 +14,7 @@ import type {
 
 export const metadata = createMetadata({
   title: "Payments",
-  description: "Manage AIListify payments and PayPal checkout activity.",
+  description: "Manage AIListify payments and checkout activity.",
 });
 
 type AdminPaymentsPageProps = {

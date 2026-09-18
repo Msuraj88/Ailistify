@@ -6,42 +6,47 @@ import {
   SUBMIT_PLAN_PRICES,
 } from "@/lib/constants/tools";
 
-export function getPayPalEnvironment(): "sandbox" | "live" {
+export type DodoEnvironment = "test_mode" | "live_mode";
+
+export function getDodoEnvironment(): DodoEnvironment {
   const value = (
-    process.env.PAYPAL_ENVIRONMENT ??
-    process.env.PAYPAL_MODE ??
-    "sandbox"
+    process.env.DODO_PAYMENTS_ENVIRONMENT ??
+    process.env.DODO_PAYMENTS_ENV ??
+    "test_mode"
   )
     .trim()
     .toLowerCase();
 
-  return value === "live" || value === "production" ? "live" : "sandbox";
+  return value === "live_mode" || value === "live" || value === "production"
+    ? "live_mode"
+    : "test_mode";
 }
 
-export function getPayPalApiBase(): string {
-  return getPayPalEnvironment() === "live"
-    ? "https://api-m.paypal.com"
-    : "https://api-m.sandbox.paypal.com";
+/** Client overlay SDK uses `test` | `live`. */
+export function getDodoCheckoutMode(): "test" | "live" {
+  return getDodoEnvironment() === "live_mode" ? "live" : "test";
 }
 
-export function getPayPalCredentials() {
-  const clientId = process.env.PAYPAL_CLIENT_ID?.trim();
-  const clientSecret = process.env.PAYPAL_CLIENT_SECRET?.trim();
-
-  if (!clientId || !clientSecret) {
+export function getDodoApiKey(): string {
+  const key = process.env.DODO_PAYMENTS_API_KEY?.trim();
+  if (!key) {
     throw new Error(
-      "PayPal is not configured. Set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET.",
+      "Dodo Payments is not configured. Set DODO_PAYMENTS_API_KEY.",
     );
   }
-
-  return { clientId, clientSecret };
+  return key;
 }
 
-export function isPayPalConfigured(): boolean {
-  return Boolean(
-    process.env.PAYPAL_CLIENT_ID?.trim() &&
-    process.env.PAYPAL_CLIENT_SECRET?.trim(),
+export function getDodoWebhookKey(): string | null {
+  return (
+    process.env.DODO_PAYMENTS_WEBHOOK_KEY?.trim() ||
+    process.env.DODO_PAYMENTS_WEBHOOK_SECRET?.trim() ||
+    null
   );
+}
+
+export function isDodoConfigured(): boolean {
+  return Boolean(process.env.DODO_PAYMENTS_API_KEY?.trim());
 }
 
 export function getPlanAmount(plan: PaidListingPlan): number {
@@ -60,17 +65,39 @@ export function getPromotePlanLabel(plan: PromotePlan): string {
   return PROMOTE_PLAN_LABELS[plan];
 }
 
-export function getPayPalClientId(): string | null {
-  return (
-    process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID?.trim() ||
-    process.env.PAYPAL_CLIENT_ID?.trim() ||
-    null
-  );
+export function getDodoProductIdForListingPlan(plan: PaidListingPlan): string {
+  const productId =
+    plan === "FEATURED"
+      ? process.env.DODO_PRODUCT_FEATURED?.trim()
+      : process.env.DODO_PRODUCT_PRIORITY?.trim();
+
+  if (!productId) {
+    throw new Error(
+      `Missing Dodo product ID for ${plan}. Set DODO_PRODUCT_${plan}.`,
+    );
+  }
+
+  return productId;
+}
+
+export function getDodoProductIdForPromotePlan(plan: PromotePlan): string {
+  const productId =
+    plan === "HOMEPAGE_SPONSOR"
+      ? process.env.DODO_PRODUCT_HOMEPAGE_SPONSOR?.trim()
+      : process.env.DODO_PRODUCT_FEATURED_LISTING?.trim();
+
+  if (!productId) {
+    throw new Error(
+      `Missing Dodo product ID for ${plan}. Set DODO_PRODUCT_${plan}.`,
+    );
+  }
+
+  return productId;
 }
 
 export function buildPaymentReturnUrl(submissionId: string): string {
   return absoluteUrl(
-    `/api/payments/paypal/capture?submissionId=${encodeURIComponent(submissionId)}`,
+    `/api/payments/dodo/return?submissionId=${encodeURIComponent(submissionId)}`,
   );
 }
 
@@ -82,7 +109,7 @@ export function buildPaymentCancelUrl(submissionId: string): string {
 
 export function buildPromotionReturnUrl(referenceId: string): string {
   return absoluteUrl(
-    `/payment/success?promotionId=${encodeURIComponent(referenceId)}`,
+    `/api/payments/dodo/return?promotionId=${encodeURIComponent(referenceId)}`,
   );
 }
 

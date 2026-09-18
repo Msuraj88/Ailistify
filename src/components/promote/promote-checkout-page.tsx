@@ -2,15 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
-import { ArrowLeft, Check, Lock } from "lucide-react";
+import { DodoPayments } from "dodopayments-checkout";
+import { ArrowLeft, Check, Lock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  capturePromotionPayPalOrder,
-  createPromotionPayPalOrder,
-} from "@/actions/payments";
+import { createPromotionCheckout } from "@/actions/payments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,14 +17,14 @@ import {
   PROMOTE_PLAN_LABELS,
   PROMOTE_PLAN_PRICES,
 } from "@/lib/constants/tools";
-import { cn } from "@/lib/utils";
 import { promoteCheckoutSchema } from "@/validations/promote";
 
 export type PromoteCheckoutPlan = keyof typeof PROMOTE_PLAN_PRICES;
 
 type PromoteCheckoutPageProps = {
   plan: PromoteCheckoutPlan;
-  paypalClientId: string | null;
+  dodoMode: "test" | "live";
+  paymentsConfigured: boolean;
 };
 
 function parsePrice(value: string): number {
@@ -36,7 +33,8 @@ function parsePrice(value: string): number {
 
 export function PromoteCheckoutPage({
   plan,
-  paypalClientId,
+  dodoMode,
+  paymentsConfigured,
 }: PromoteCheckoutPageProps) {
   const router = useRouter();
   const pkg = getPromotePackageByPlan(plan) as PromotePackage;
@@ -47,6 +45,7 @@ export function PromoteCheckoutPage({
     toolUrl?: string;
   }>({});
   const [isPaying, setIsPaying] = useState(false);
+  const [sdkReady, setSdkReady] = useState(false);
 
   const planLabel = PROMOTE_PLAN_LABELS[plan];
   const amount = PROMOTE_PLAN_PRICES[plan];
@@ -68,6 +67,27 @@ export function PromoteCheckoutPage({
     return { success: true as const, data: parsed.data };
   }, [plan, contactEmail, toolUrl]);
 
+  useEffect(() => {
+    DodoPayments.Initialize({
+      mode: dodoMode,
+      displayType: "overlay",
+      onEvent: (event) => {
+        if (event.event_type === "checkout.error") {
+          toast.error(
+            event.data?.message
+              ? String(event.data.message)
+              : "Checkout failed. Please try again.",
+          );
+          setIsPaying(false);
+        }
+        if (event.event_type === "checkout.closed") {
+          setIsPaying(false);
+        }
+      },
+    });
+    setSdkReady(true);
+  }, [dodoMode]);
+
   function syncFieldErrors() {
     const parsed = promoteCheckoutSchema.safeParse({
       plan,
@@ -86,6 +106,37 @@ export function PromoteCheckoutPage({
       }
     }
     setFieldErrors(next);
+  }
+
+  async function handlePay() {
+    syncFieldErrors();
+    if (!validation.data) {
+      toast.error("Enter a valid contact email and tool URL.");
+      return;
+    }
+
+    setIsPaying(true);
+    try {
+      const result = await createPromotionCheckout(validation.data);
+      if (!result.success) {
+        toast.error(result.error);
+        setIsPaying(false);
+        return;
+      }
+
+      if (sdkReady) {
+        DodoPayments.Checkout.open({
+          checkoutUrl: result.data.checkoutUrl,
+        });
+      } else {
+        window.location.assign(result.data.checkoutUrl);
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to start checkout.",
+      );
+      setIsPaying(false);
+    }
   }
 
   return (
@@ -237,97 +288,41 @@ export function PromoteCheckoutPage({
                   </p>
                 </div>
 
-                {!paypalClientId ? (
+                {!paymentsConfigured ? (
                   <p className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-                    PayPal checkout is temporarily unavailable.
+                    Payments are temporarily unavailable.
                   </p>
-                ) : !validation.success ? (
-                  <div className="space-y-2">
-                    <Button
-                      type="button"
-                      className={cn(
-                        "h-12 w-full rounded-lg bg-[#ffc439] text-base font-semibold text-[#003087] hover:bg-[#f5bb33]",
-                      )}
-                      disabled
-                    >
-                      Enter valid details to unlock PayPal
-                    </Button>
-                    <p className="text-center text-xs text-muted-foreground">
-                      PayPal buttons unlock after Contact Email and Tool URL are
-                      valid.
-                    </p>
-                  </div>
                 ) : (
-                  <PayPalScriptProvider
-                    options={{
-                      clientId: paypalClientId,
-                      currency: "USD",
-                      intent: "capture",
-                      enableFunding: "card",
-                    }}
+                  <Button
+                    type="button"
+                    className="h-12 w-full rounded-lg text-base font-semibold"
+                    disabled={!validation.success || isPaying}
+                    onClick={() => void handlePay()}
                   >
-                    <PayPalButtons
-                      key={`${plan}-${validation.data.contactEmail}-${validation.data.toolUrl}`}
-                      style={{
-                        layout: "vertical",
-                        shape: "rect",
-                        color: "gold",
-                        label: "paypal",
-                        height: 48,
-                      }}
-                      disabled={isPaying}
-                      createOrder={async () => {
-                        syncFieldErrors();
-                        if (!validation.data) {
-                          throw new Error(
-                            "Complete the required fields first.",
-                          );
-                        }
-                        const result = await createPromotionPayPalOrder(
-                          validation.data,
-                        );
-                        if (!result.success) {
-                          toast.error(result.error);
-                          throw new Error(result.error);
-                        }
-                        return result.data.orderId;
-                      }}
-                      onApprove={async (data) => {
-                        setIsPaying(true);
-                        try {
-                          const result = await capturePromotionPayPalOrder(
-                            data.orderID,
-                          );
-                          if (!result.success) {
-                            toast.error(result.error);
-                            router.push(
-                              `/payment/failed?reason=${encodeURIComponent(result.error)}`,
-                            );
-                            return;
-                          }
-                          toast.success("Payment successful.");
-                          router.push(
-                            `/payment/success?promotionId=${encodeURIComponent(result.data.referenceId)}&paymentId=${encodeURIComponent(result.data.paymentId)}`,
-                          );
-                        } finally {
-                          setIsPaying(false);
-                        }
-                      }}
-                      onCancel={() => {
-                        toast.message("Payment cancelled.");
-                      }}
-                      onError={() => {
-                        toast.error(
-                          "PayPal checkout failed. Please try again.",
-                        );
-                      }}
-                    />
-                  </PayPalScriptProvider>
+                    {isPaying ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Opening checkout…
+                      </>
+                    ) : validation.success ? (
+                      `Pay $${amount} securely`
+                    ) : (
+                      "Enter valid details to unlock payment"
+                    )}
+                  </Button>
                 )}
 
                 <p className="pt-1 text-center text-xs text-muted-foreground">
-                  Powered by <span className="font-semibold">PayPal</span>
+                  Powered by{" "}
+                  <span className="font-semibold">Dodo Payments</span>
                 </p>
+                <button
+                  type="button"
+                  className="mx-auto block text-xs text-muted-foreground underline-offset-2 hover:underline"
+                  onClick={() => router.push("/promote")}
+                >
+                  Cancel and go back
+                </button>
               </div>
             </section>
           </div>

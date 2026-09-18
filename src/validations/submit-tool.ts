@@ -86,9 +86,15 @@ export type RejectToolSubmissionInput = z.infer<
   typeof rejectToolSubmissionSchema
 >;
 
-export const capturePayPalOrderSchema = z.object({
+export const captureCheckoutOrderSchema = z.object({
   orderId: z.string().min(1),
   toolId: z.string().min(1),
 });
 
-export type CapturePayPalOrderInput = z.infer<typeof capturePayPalOrderSchema>;
+export type CaptureCheckoutOrderInput = z.infer<
+  typeof captureCheckoutOrderSchema
+>;
+
+/** @deprecated Use captureCheckoutOrderSchema */
+export const capturePayPalOrderSchema = captureCheckoutOrderSchema;
+export type CapturePayPalOrderInput = CaptureCheckoutOrderInput;
