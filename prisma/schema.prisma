@@ -47,6 +47,7 @@ enum PaymentStatus {
 
 enum PaymentProvider {
   PAYPAL
+  DODO
 }
 
 enum GatewayPaymentStatus {
@@ -61,6 +62,7 @@ enum GatewayPaymentStatus {
 enum PaymentMethodType {
   PAYPAL
   CARD
+  DODO
 }
 
 enum PromotionPlan {

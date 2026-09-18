@@ -143,7 +143,7 @@ export function PaymentsManager({ stats, payments }: PaymentsManagerProps) {
             Payments
           </h1>
           <p className="mt-1 text-muted-foreground">
-            Track PayPal checkout revenue, statuses, and submission payments.
+            Track checkout revenue, statuses, and submission payments.
           </p>
         </div>
         <Button asChild variant="outline">

@@ -12,19 +12,20 @@ export const metadata = createNoIndexMetadata({
 });
 
 type PaymentCancelPageProps = {
-  searchParams: Promise<{ submissionId?: string }>;
+  searchParams: Promise<{ submissionId?: string; promotionId?: string }>;
 };
 
 export default async function PaymentCancelPage({
   searchParams,
 }: PaymentCancelPageProps) {
   const params = await searchParams;
+  const referenceId = params.submissionId ?? params.promotionId;
 
-  if (params.submissionId) {
-    await PaymentService.markCancelled(params.submissionId).catch(
-      () => undefined,
-    );
+  if (referenceId) {
+    await PaymentService.markCancelled(referenceId).catch(() => undefined);
   }
+
+  const isPromotion = Boolean(params.promotionId && !params.submissionId);
 
   return (
     <div className="container mx-auto flex min-h-[60vh] items-center justify-center px-4 py-16 sm:px-6 lg:px-8">
@@ -38,20 +39,21 @@ export default async function PaymentCancelPage({
           Payment Cancelled
         </h1>
         <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-          Your submission has been saved. You can complete your payment later
-          from My Tools.
+          {isPromotion
+            ? "Your sponsorship details were saved. You can restart checkout from the promote page anytime."
+            : "Your submission has been saved. You can complete your payment later from My Tools."}
         </p>
-        {params.submissionId && (
+        {referenceId && (
           <p className="mt-4 text-sm text-muted-foreground">
-            Submission ID:{" "}
-            <span className="font-medium text-foreground">
-              {params.submissionId}
-            </span>
+            Reference ID:{" "}
+            <span className="font-medium text-foreground">{referenceId}</span>
           </p>
         )}
         <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <Button asChild>
-            <Link href="/my-tools">Retry Payment</Link>
+            <Link href={isPromotion ? "/promote" : "/my-tools"}>
+              {isPromotion ? "Back to promote" : "Retry Payment"}
+            </Link>
           </Button>
           <Button asChild variant="outline">
             <Link href="/">Back to home</Link>

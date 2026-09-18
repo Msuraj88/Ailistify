@@ -8,7 +8,7 @@ import { getDatabaseUrl } from "@/lib/env";
  * Bump this when adding Prisma models so Next.js does not reuse a stale
  * global PrismaClient from before `prisma generate`.
  */
-const PRISMA_GLOBAL_KEY = "__ailistify_prisma_v4_promotions__" as const;
+const PRISMA_GLOBAL_KEY = "__ailistify_prisma_v5_dodo__" as const;
 
 type PrismaGlobalStore = {
   client?: PrismaClient;

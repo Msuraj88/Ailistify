@@ -98,7 +98,7 @@ function MyToolCard({ tool }: { tool: MyToolListItem }) {
         return;
       }
 
-      toast.success("Redirecting to PayPal Checkout...");
+      toast.success("Redirecting to secure checkout...");
       setUpgradeOpen(false);
       await redirectToCheckout(result.data.paymentUrl);
     } catch {
@@ -122,7 +122,7 @@ function MyToolCard({ tool }: { tool: MyToolListItem }) {
         return;
       }
 
-      toast.success("Redirecting to PayPal Checkout...");
+      toast.success("Redirecting to secure checkout...");
       await redirectToCheckout(result.data.approvalUrl);
     } catch {
       toast.error("Could not retry payment.");
@@ -169,14 +169,16 @@ function MyToolCard({ tool }: { tool: MyToolListItem }) {
             >
               {tool.queueLabel}
             </span>
-            <span
-              className={cn(
-                "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                paymentBadgeClass(tool.paymentStatus),
-              )}
-            >
-              Payment: {tool.paymentStatus}
-            </span>
+            {tool.paymentStatus !== "NOT_REQUIRED" && (
+              <span
+                className={cn(
+                  "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                  paymentBadgeClass(tool.paymentStatus),
+                )}
+              >
+                Payment: {tool.paymentStatus}
+              </span>
+            )}
           </div>
           <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
             {tool.shortDescription}
@@ -239,7 +241,7 @@ function MyToolCard({ tool }: { tool: MyToolListItem }) {
             <DialogTitle>Upgrade to Premium Launch</DialogTitle>
             <DialogDescription>
               Skip the free queue and get published faster with Priority or
-              Featured listing. You will complete payment via PayPal Checkout.
+              Featured listing. You will complete payment via secure checkout.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3">
@@ -257,7 +259,7 @@ function MyToolCard({ tool }: { tool: MyToolListItem }) {
               </p>
               {upgrading === "PRIORITY" && (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Starting PayPal checkout...
+                  Starting checkout...
                 </p>
               )}
             </button>
@@ -276,7 +278,7 @@ function MyToolCard({ tool }: { tool: MyToolListItem }) {
               </p>
               {upgrading === "FEATURED" && (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Starting PayPal checkout...
+                  Starting checkout...
                 </p>
               )}
             </button>

@@ -59,7 +59,7 @@ export function SubmitPackages() {
         </h1>
         <p className="mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
           Get your AI tool in front of thousands of founders, developers, and AI
-          enthusiasts. Submit your tool, then complete secure PayPal checkout.
+          enthusiasts. Submit your tool, then complete secure checkout.
         </p>
       </header>
 

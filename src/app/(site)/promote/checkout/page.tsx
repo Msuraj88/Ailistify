@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { PromoteCheckoutPage } from "@/components/promote/promote-checkout-page";
 import { getPromotePackageByPlan } from "@/content/promote";
-import { createNoIndexMetadata } from "@/lib/metadata";
-import { getPayPalClientId } from "@/lib/payments/config";
 import { PROMOTE_PLAN_LABELS } from "@/lib/constants/tools";
+import { createNoIndexMetadata } from "@/lib/metadata";
+import { getDodoCheckoutMode, isDodoConfigured } from "@/lib/payments/config";
 
 const PLAN_VALUES = ["HOMEPAGE_SPONSOR", "FEATURED_LISTING"] as const;
 
@@ -47,6 +47,10 @@ export default async function PromoteCheckoutRoute({
   }
 
   return (
-    <PromoteCheckoutPage plan={pkg.plan} paypalClientId={getPayPalClientId()} />
+    <PromoteCheckoutPage
+      plan={pkg.plan}
+      dodoMode={getDodoCheckoutMode()}
+      paymentsConfigured={isDodoConfigured()}
+    />
   );
 }
