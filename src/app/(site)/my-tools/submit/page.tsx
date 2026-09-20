@@ -42,8 +42,8 @@ export default async function MyToolsSubmitPage() {
           Submit Tool
         </h1>
         <p className="mt-2 text-muted-foreground">
-          Use AI Analyze or write the listing yourself. Free submissions enter
-          the review queue.
+          Use AI Analyze or write the listing yourself, select a plan, then
+          continue to secure checkout.
         </p>
       </div>
 

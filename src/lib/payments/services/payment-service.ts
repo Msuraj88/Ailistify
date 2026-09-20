@@ -72,6 +72,82 @@ function toNumber(value: Prisma.Decimal | number | string): number {
   return typeof value === "number" ? value : Number(value);
 }
 
+/**
+ * Adaptive pricing charges customers in local currency (e.g. INR) while our
+ * Payment rows store USD plan prices. Prefer settlement amount when present,
+ * and trust Dodo metadata / product cart when the charge currency differs.
+ */
+function isVerifiedPaidAmount(
+  payment: {
+    id: string;
+    amount: Prisma.Decimal | number | string;
+    currency: string;
+  },
+  providerPayment: ProviderPayment,
+  expectedProductId?: string | null,
+): { ok: true } | { ok: false; detail: string } {
+  const expectedAmount = toNumber(payment.amount);
+  const expectedFromMeta = Number(providerPayment.metadata.expectedAmount);
+  const compareExpected = Number.isFinite(expectedFromMeta)
+    ? expectedFromMeta
+    : expectedAmount;
+  const expectedCurrency = (
+    providerPayment.metadata.expectedCurrency ||
+    payment.currency ||
+    "USD"
+  ).toUpperCase();
+
+  const metadataTrusted =
+    providerPayment.metadata.internalPaymentId === payment.id ||
+    (Boolean(expectedProductId) &&
+      providerPayment.productIds.includes(expectedProductId!));
+
+  let actualAmount = providerPayment.amount;
+  let actualCurrency = providerPayment.currency.toUpperCase();
+
+  if (
+    providerPayment.settlementAmount != null &&
+    providerPayment.settlementCurrency &&
+    actualCurrency !== expectedCurrency &&
+    providerPayment.settlementCurrency.toUpperCase() === expectedCurrency
+  ) {
+    actualAmount = providerPayment.settlementAmount;
+    actualCurrency = providerPayment.settlementCurrency.toUpperCase();
+  }
+
+  if (actualCurrency !== expectedCurrency) {
+    if (metadataTrusted) {
+      return { ok: true };
+    }
+
+    return {
+      ok: false,
+      detail: `Currency mismatch. Expected ${expectedCurrency}, got ${actualCurrency}`,
+    };
+  }
+
+  if (compareExpected <= 0) {
+    return metadataTrusted
+      ? { ok: true }
+      : { ok: false, detail: "Expected amount is missing." };
+  }
+
+  const tolerance = Math.max(1, compareExpected * 0.35);
+  if (Math.abs(actualAmount - compareExpected) <= tolerance) {
+    return { ok: true };
+  }
+
+  // Same checkout session / configured product: accept FX + tax variance.
+  if (metadataTrusted) {
+    return { ok: true };
+  }
+
+  return {
+    ok: false,
+    detail: `Amount mismatch. Expected ~${compareExpected} ${expectedCurrency}, got ${actualAmount} ${actualCurrency}`,
+  };
+}
+
 async function markToolPaid(input: {
   toolId: string;
   providerOrderId: string;
@@ -227,26 +303,54 @@ async function finalizePaidPayment(
     );
   }
 
-  const expectedAmount = toNumber(payment.amount);
-  const expectedFromMeta = Number(providerPayment.metadata.expectedAmount);
-  const compareAgainst = Number.isFinite(expectedFromMeta)
-    ? expectedFromMeta
-    : expectedAmount;
+  const listingPlanMeta = providerPayment.metadata.listingPlan;
+  const promotePlanMeta = providerPayment.metadata.promotePlan;
+  let expectedProductId: string | null = null;
+  try {
+    if (listingPlanMeta === "PRIORITY" || listingPlanMeta === "FEATURED") {
+      expectedProductId = getDodoProductIdForListingPlan(listingPlanMeta);
+    } else if (
+      promotePlanMeta === "HOMEPAGE_SPONSOR" ||
+      promotePlanMeta === "FEATURED_LISTING"
+    ) {
+      expectedProductId = getDodoProductIdForPromotePlan(promotePlanMeta);
+    } else if (
+      payment.tool?.listingPlan === ListingPlan.PRIORITY ||
+      payment.tool?.listingPlan === ListingPlan.FEATURED
+    ) {
+      expectedProductId = getDodoProductIdForListingPlan(
+        payment.tool.listingPlan === ListingPlan.FEATURED
+          ? "FEATURED"
+          : "PRIORITY",
+      );
+    } else if (payment.promotion?.plan) {
+      expectedProductId = getDodoProductIdForPromotePlan(
+        payment.promotion.plan === PromotionPlan.HOMEPAGE_SPONSOR
+          ? "HOMEPAGE_SPONSOR"
+          : "FEATURED_LISTING",
+      );
+    }
+  } catch {
+    expectedProductId = null;
+  }
 
-  // Allow tax/FX variance while still catching wrong product checkouts.
-  if (
-    compareAgainst > 0 &&
-    Math.abs(providerPayment.amount - compareAgainst) >
-      Math.max(1, compareAgainst * 0.35)
-  ) {
+  const amountCheck = isVerifiedPaidAmount(
+    payment,
+    providerPayment,
+    expectedProductId,
+  );
+
+  if (!amountCheck.ok) {
     await recordEvent(
       payment.id,
       "PAYMENT_FAILED",
-      `Amount mismatch. Expected ~${compareAgainst} ${payment.currency}, got ${providerPayment.amount} ${providerPayment.currency}`,
+      amountCheck.detail,
       providerPayment.raw,
     );
     throw new Error("Payment amount could not be verified.");
   }
+
+  const expectedAmount = toNumber(payment.amount);
 
   await prisma.$transaction(async (tx) => {
     await tx.payment.update({

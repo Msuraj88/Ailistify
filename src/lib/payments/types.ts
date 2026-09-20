@@ -45,8 +45,13 @@ export type CaptureCheckoutResult = {
 export type ProviderPayment = {
   providerPaymentId: string;
   status: string;
+  /** Charged amount in major units (e.g. dollars/rupees). */
   amount: number;
   currency: string;
+  /** Settlement amount in major units when adaptive pricing converts currencies. */
+  settlementAmount: number | null;
+  settlementCurrency: string | null;
+  productIds: string[];
   payerEmail: string | null;
   payerName: string | null;
   country: string | null;
