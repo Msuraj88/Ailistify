@@ -12,6 +12,7 @@ import {
   checkSubmitToolWebsiteExists,
   submitTool,
   updateMyTool,
+  upgradeMyToolListing,
 } from "@/actions/submit-tool";
 import { UserToolLogoUpload } from "@/components/submit-tool/user-tool-logo-upload";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ADMIN_TOOL_PRICING_MODELS } from "@/lib/constants/tools";
+import { trackPaymentEvent } from "@/lib/analytics/payments";
+import {
+  ADMIN_TOOL_PRICING_MODELS,
+  SUBMIT_PLAN_PRICES,
+} from "@/lib/constants/tools";
+import { cn } from "@/lib/utils";
 import { analyzeToolUrlSchema } from "@/validations/analyze-tool";
 import {
   submitToolSchema,
@@ -84,6 +90,10 @@ export function UserToolForm({
   const [serverError, setServerError] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzeProgress, setAnalyzeProgress] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<
+    "PRIORITY" | "FEATURED" | null
+  >(null);
+  const [isContinuing, setIsContinuing] = useState(false);
   const [websiteUrlCheckState, setWebsiteUrlCheckState] =
     useState<WebsiteUrlCheckState>("idle");
   const [existingToolName, setExistingToolName] = useState<string | null>(null);
@@ -106,7 +116,7 @@ export function UserToolForm({
   });
 
   const websiteUrlValue = watch("websiteUrl");
-  const formDisabled = isSubmitting || isAnalyzing;
+  const formDisabled = isSubmitting || isAnalyzing || isContinuing;
   const canAnalyze =
     (websiteUrlCheckState === "available" || mode === "edit") && !formDisabled;
 
@@ -178,20 +188,6 @@ export function UserToolForm({
     setServerError(null);
 
     if (mode === "create") {
-      const result = await submitTool({
-        ...data,
-        listingPlan: "FREE",
-      });
-
-      if (!result.success) {
-        setServerError(result.error);
-        toast.error(result.error);
-        return;
-      }
-
-      toast.success("Tool submitted to the review queue.");
-      router.push("/my-tools");
-      router.refresh();
       return;
     }
 
@@ -229,6 +225,62 @@ export function UserToolForm({
     toast.success("Tool updated and returned to the review queue.");
     router.push("/my-tools");
     router.refresh();
+  }
+
+  async function onContinueToCheckout() {
+    if (!selectedPlan) {
+      toast.error("Select a listing plan to continue.");
+      return;
+    }
+
+    setServerError(null);
+    setIsContinuing(true);
+
+    try {
+      let redirected = false;
+
+      await handleSubmit(async (data) => {
+        trackPaymentEvent("begin_checkout", {
+          item_name: selectedPlan,
+          value: SUBMIT_PLAN_PRICES[selectedPlan],
+          currency: "USD",
+        });
+
+        const result = await submitTool({
+          ...data,
+          listingPlan: selectedPlan,
+        });
+
+        if (!result.success) {
+          setServerError(result.error);
+          toast.error(result.error);
+          return;
+        }
+
+        const checkout = await upgradeMyToolListing(
+          result.data.toolId,
+          selectedPlan,
+        );
+        if (!checkout.success) {
+          setServerError(checkout.error);
+          toast.error(checkout.error);
+          router.push("/my-tools");
+          router.refresh();
+          return;
+        }
+
+        redirected = true;
+        toast.success("Redirecting to secure checkout...");
+        window.location.assign(checkout.data.paymentUrl);
+      })();
+
+      if (!redirected) {
+        setIsContinuing(false);
+      }
+    } catch {
+      setIsContinuing(false);
+      toast.error("Could not start checkout. Please try again.");
+    }
   }
 
   async function handleAnalyze() {
@@ -299,7 +351,7 @@ export function UserToolForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-      <input type="hidden" {...register("listingPlan")} value="FREE" />
+      <input type="hidden" {...register("listingPlan")} />
 
       {serverError && (
         <div
@@ -561,28 +613,90 @@ export function UserToolForm({
         </div>
       </section>
 
-      <div className="flex flex-wrap gap-3">
+      {mode === "create" ? (
+        <div className="space-y-4">
+          <div
+            className="grid gap-3 sm:grid-cols-2"
+            role="radiogroup"
+            aria-label="Listing plan"
+          >
+            {(
+              [
+                {
+                  id: "PRIORITY" as const,
+                  title: `Priority Listing $${SUBMIT_PLAN_PRICES.PRIORITY}`,
+                  description:
+                    "Published within 24 hours with priority review.",
+                },
+                {
+                  id: "FEATURED" as const,
+                  title: `Listing + Featured $${SUBMIT_PLAN_PRICES.FEATURED}`,
+                  description:
+                    "Priority review plus homepage featured placement for 4 weeks.",
+                },
+              ] as const
+            ).map((plan) => {
+              const isSelected = selectedPlan === plan.id;
+              return (
+                <button
+                  key={plan.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={isSelected}
+                  disabled={formDisabled}
+                  onClick={() => {
+                    setSelectedPlan(plan.id);
+                    setValue("listingPlan", plan.id, { shouldValidate: true });
+                  }}
+                  className={cn(
+                    "flex h-auto flex-col items-start gap-1 rounded-lg border bg-background px-4 py-3 text-left transition-colors",
+                    "hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                    "disabled:pointer-events-none disabled:opacity-50",
+                    isSelected
+                      ? "border-foreground ring-1 ring-foreground"
+                      : "border-input",
+                  )}
+                >
+                  <span className="text-sm font-semibold text-foreground">
+                    {plan.title}
+                  </span>
+                  <span className="text-xs font-normal text-muted-foreground">
+                    {plan.description}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {selectedPlan ? (
+            <Button
+              type="button"
+              disabled={formDisabled}
+              onClick={() => void onContinueToCheckout()}
+            >
+              {isContinuing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Starting checkout...
+                </>
+              ) : (
+                "Continue"
+              )}
+            </Button>
+          ) : null}
+        </div>
+      ) : (
         <Button type="submit" disabled={formDisabled}>
           {isSubmitting ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              {mode === "create" ? "Submitting..." : "Saving..."}
+              Saving...
             </>
-          ) : mode === "create" ? (
-            "Submit to Queue"
           ) : (
             "Update Submission"
           )}
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={formDisabled}
-          onClick={() => router.push("/my-tools")}
-        >
-          Cancel
-        </Button>
-      </div>
+      )}
     </form>
   );
 }

@@ -90,12 +90,31 @@ export const dodoProvider: PaymentProvider = {
   async getPayment(providerPaymentId: string): Promise<ProviderPayment> {
     const dodo = getClient();
     const payment = await dodo.payments.retrieve(providerPaymentId);
+    const productIds = Array.isArray(payment.product_cart)
+      ? payment.product_cart
+          .map((item) =>
+            item && typeof item === "object" && "product_id" in item
+              ? String(
+                  (item as { product_id?: string | null }).product_id ?? "",
+                )
+              : "",
+          )
+          .filter(Boolean)
+      : [];
 
     return {
       providerPaymentId: payment.payment_id,
       status: payment.status ?? "unknown",
       amount: minorUnitsToMajor(payment.total_amount),
       currency: String(payment.currency ?? "USD").toUpperCase(),
+      settlementAmount:
+        payment.settlement_amount == null
+          ? null
+          : minorUnitsToMajor(payment.settlement_amount),
+      settlementCurrency: payment.settlement_currency
+        ? String(payment.settlement_currency).toUpperCase()
+        : null,
+      productIds,
       payerEmail: payment.customer?.email ?? null,
       payerName: payment.customer?.name ?? null,
       country: payment.billing?.country ?? null,
