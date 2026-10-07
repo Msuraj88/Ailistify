@@ -78,7 +78,10 @@ export function HeroSponsorAvailableChip({
     >
       <SponsorChipShell label="Available">
         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted">
-          <Sparkles className="h-3.5 w-3.5 text-foreground" aria-hidden="true" />
+          <Sparkles
+            className="h-3.5 w-3.5 text-foreground"
+            aria-hidden="true"
+          />
         </div>
         <span className="whitespace-nowrap text-sm font-bold text-foreground sm:text-base">
           Sponsor this slot
