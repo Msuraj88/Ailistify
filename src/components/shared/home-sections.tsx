@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { EmptyState } from "@/components/admin/empty-state";
 import { BestGuideCard } from "@/components/best/best-guide-card";
+import { FeaturedListingPromoCard } from "@/components/directory/featured-listing-promo-card";
 import { NewsletterForm } from "@/components/directory/newsletter-form";
 import { CategoryCard } from "@/components/tools/category-card";
 import { ToolCard } from "@/components/tools/tool-card";
@@ -36,18 +37,12 @@ export function FeaturedToolsSection({
           </Button>
         </div>
 
-        {tools.length === 0 ? (
-          <EmptyState
-            title="No featured tools yet"
-            description="Check back soon for curated AI tool picks."
-          />
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {tools.map((tool) => (
-              <ToolCard key={tool.id} tool={tool} />
-            ))}
-          </div>
-        )}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <FeaturedListingPromoCard />
+          {tools.map((tool) => (
+            <ToolCard key={tool.id} tool={tool} />
+          ))}
+        </div>
       </div>
     </section>
   );
