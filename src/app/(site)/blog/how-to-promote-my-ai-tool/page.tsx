@@ -110,15 +110,14 @@ export default function HowToPromoteMyAiToolPage() {
           </h1>
           <p className="text-base leading-relaxed text-slate-600 dark:text-muted-foreground sm:text-lg">
             You shipped. The waitlist ballooned. Then… silence. Launch fatigue
-            hits hard when founders burn weeks chasing Product Hunt timing,
-            cold DMs, and directory queues that move like molasses. If you are
-            asking{" "}
+            hits hard when founders burn weeks chasing Product Hunt timing, cold
+            DMs, and directory queues that move like molasses. If you are asking{" "}
             <strong className="font-semibold text-[#1a202c] dark:text-foreground">
               how to promote my AI tool
             </strong>{" "}
             without burning runway, this playbook is your distribution stack —
-            practical, sequenced, and built for getting traffic to an AI
-            startup in 2026.
+            practical, sequenced, and built for getting traffic to an AI startup
+            in 2026.
           </p>
         </header>
 
@@ -208,8 +207,8 @@ export default function HowToPromoteMyAiToolPage() {
                   Sequence secondary launches.
                 </strong>{" "}
                 Use Product Hunt for the spike, LaunchingNext for discovery
-                linger, and Hacker News only when you have a technical
-                narrative worth debating.
+                linger, and Hacker News only when you have a technical narrative
+                worth debating.
               </li>
             </ol>
           </div>
@@ -253,13 +252,13 @@ export default function HowToPromoteMyAiToolPage() {
           <div className="mt-4 space-y-4 text-base leading-relaxed text-slate-600 dark:text-muted-foreground">
             <p>
               Distribution is still a people business. Cold outreach and
-              micro-influencer seeds convert when the ask is specific, the
-              asset is ready, and the creator already talks to your ICP.
+              micro-influencer seeds convert when the ask is specific, the asset
+              is ready, and the creator already talks to your ICP.
             </p>
             <ol className="list-decimal space-y-3 pl-5">
               <li>
-                Build a list of 50 niche creators (newsletters, YouTube, indie
-                X accounts) who cover AI workflows — not mega-celebrities.
+                Build a list of 50 niche creators (newsletters, YouTube, indie X
+                accounts) who cover AI workflows — not mega-celebrities.
               </li>
               <li>
                 Lead with a free seat, unique angle, or early access, not a
