@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
-import { HeroSponsorChip } from "@/components/directory/hero-sponsor-chip";
+import {
+  HeroSponsorAvailableChip,
+  HeroSponsorChip,
+} from "@/components/directory/hero-sponsor-chip";
 import type {
   DirectoryCategoryCard,
   HeroSponsoredTool,
@@ -21,22 +23,11 @@ export function HeroSection({
     <section>
       <div className="container mx-auto px-4 py-10 sm:px-6 lg:px-8">
         <div className="overflow-hidden rounded-2xl bg-[url('/hero-gradient.png')] bg-cover bg-center px-6 py-8 text-center dark:bg-none dark:bg-gradient-to-br dark:from-card dark:to-secondary/40 sm:px-10 sm:py-10">
-          <div
-            className={
-              heroSponsoredTool
-                ? "mb-5 flex justify-center pt-3"
-                : "mb-5 flex justify-center"
-            }
-          >
+          <div className="mb-5 flex justify-center pt-3">
             {heroSponsoredTool ? (
               <HeroSponsorChip tool={heroSponsoredTool} />
             ) : (
-              <div className="inline-flex items-center gap-2 rounded-full border bg-background/70 px-4 py-1.5 text-sm backdrop-blur-sm">
-                <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
-                <span>
-                  Curated directory of {totalTools.toLocaleString()}+ AI tools
-                </span>
-              </div>
+              <HeroSponsorAvailableChip />
             )}
           </div>
 

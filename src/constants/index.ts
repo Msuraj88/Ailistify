@@ -9,6 +9,10 @@ export const FOOTER_LINKS = [
   { href: "/tools", label: "All Tools" },
   { href: "/categories", label: "Categories" },
   { href: "/blog", label: "Blog" },
+  {
+    href: "/blog/how-to-promote-my-ai-tool",
+    label: "How to Promote an AI Tool",
+  },
   { href: "/my-tools", label: "Submit a Tool" },
 ] as const;
 
