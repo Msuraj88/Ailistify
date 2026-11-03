@@ -3,7 +3,7 @@ import type { PolicyMeta, PolicySection } from "@/content/policy-types";
 export const refundPolicyMeta: PolicyMeta = {
   title: "Refund Policy",
   lastUpdated: "July 2, 2026",
-  contactEmail: "hi@ailistify.com",
+  contactEmail: "hello@ailistify.com",
 };
 
 export const refundPolicySections: PolicySection[] = [

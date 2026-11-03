@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Bot, Eye, Sparkles, Star, TrendingUp, Users } from "lucide-react";
+import { Eye, Mail, Sparkles, Star, TrendingUp, Users } from "lucide-react";
 
 export type PromoteSectionId = "opportunities" | "faqs";
 
@@ -44,7 +44,7 @@ export type PreviousSponsor = {
 
 export const promoteMeta = {
   title: "Promote Your AI Tool",
-  contactEmail: "hi@ailistify.com",
+  contactEmail: "hello@ailistify.com",
 };
 
 export const promoteSections: {
@@ -134,7 +134,7 @@ export const promoteFaqs: PromoteFaq[] = [
   {
     question: "Who should I contact for custom campaigns?",
     answer:
-      "Email hi@ailistify.com with your goals and timeline. We can discuss bundles, longer terms, and custom placements.",
+      "Email hello@ailistify.com with your goals and timeline. We can discuss bundles, longer terms, and custom placements.",
   },
 ];
 
@@ -204,16 +204,16 @@ export const previousSponsors: PreviousSponsor[] = [
 
 export function buildPromoteStats(): PromoteStat[] {
   return [
-    { icon: Eye, value: "80,000+", label: "Monthly Pageviews" },
-    { icon: Users, value: "14,000+", label: "Monthly Visitors" },
+    { icon: Eye, value: "465K", label: "Monthly Pageviews" },
+    { icon: Users, value: "120K", label: "Monthly Visitors" },
     {
-      icon: Bot,
-      value: "5,000+",
-      label: "AI Tools Listed",
+      icon: Mail,
+      value: "3,000+",
+      label: "Newsletter Subscribers",
     },
     {
       icon: TrendingUp,
-      value: "3x",
+      value: "4x",
       label: "Traffic Growth in the Past 90 Days",
     },
   ];

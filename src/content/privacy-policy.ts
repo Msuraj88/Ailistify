@@ -5,7 +5,7 @@ export type { PolicySection } from "@/content/policy-types";
 export const privacyPolicyMeta = {
   title: "Privacy Policy",
   lastUpdated: "June 24, 2026",
-  contactEmail: "hi@ailistify.com",
+  contactEmail: "hello@ailistify.com",
 };
 
 export const privacyPolicySections: PolicySection[] = [
@@ -233,7 +233,7 @@ export const privacyPolicySections: PolicySection[] = [
     id: "contact",
     title: "Contact Us",
     content: [
-      "If you have any questions about this Privacy Policy, You can contact us by email at hi@ailistify.com.",
+      "If you have any questions about this Privacy Policy, You can contact us by email at hello@ailistify.com.",
     ],
   },
 ];
