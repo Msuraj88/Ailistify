@@ -3,7 +3,7 @@ import type { PolicyMeta, PolicySection } from "@/content/policy-types";
 export const termsAndConditionsMeta: PolicyMeta = {
   title: "Terms & Conditions",
   lastUpdated: "July 2, 2026",
-  contactEmail: "hi@ailistify.com",
+  contactEmail: "hello@ailistify.com",
 };
 
 export const termsAndConditionsSections: PolicySection[] = [
